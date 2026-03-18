@@ -1,0 +1,77 @@
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	min-height: 100vh;
+	color: #0f172a;
+	background:
+		radial-gradient(circle at 10% 10%, #e0e7ff 0%, transparent 35%),
+		radial-gradient(circle at 90% 0%, #ccfbf1 0%, transparent 30%),
+		#f8fafc;
+	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+		Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+	line-height: 1.6;
+}
+
+main {
+	width: min(980px, 92vw);
+	margin: 2rem auto;
+	padding: 1.5rem;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(6px);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+h1 {
+	margin: 0;
+	color: #0b1325;
+	letter-spacing: -0.02em;
+}
+
+p {
+	color: #334155;
+}
+
+a {
+	color: #1d4ed8;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.homeGrid {
+	margin-top: 1.25rem;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 0.75rem;
+	list-style: none;
+	padding: 0;
+}
+
+.homeCard {
+	display: block;
+	padding: 0.85rem 1rem;
+	border: 1px solid #dbeafe;
+	border-radius: 12px;
+	background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+	color: #0f172a;
+	font-weight: 600;
+	transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.homeCard:hover {
+	transform: translateY(-2px);
+	border-color: #93c5fd;
+	box-shadow: 0 10px 20px rgba(59, 130, 246, 0.15);
+	text-decoration: none;
+}
