@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 
 const CHATBOT_ID = process.env.NEXT_PUBLIC_CHATBASE_BOT_ID;
 const DEFAULT_HINT_TEXT = 'Ask about my experience';
+const NOT_CONFIGURED_HINT_TEXT = 'Chat is not configured';
 
 export default function ChatbaseBootstrap() {
-  const pathname = usePathname();
   const [showHint, setShowHint] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [hintText, setHintText] = useState(DEFAULT_HINT_TEXT);
@@ -37,11 +36,20 @@ export default function ChatbaseBootstrap() {
       window.clearTimeout(initialHide);
       window.clearInterval(repeatHint);
     };
-  }, [pathname]);
+  }, []);
+
+  const showDefaultHint = () => {
+    setHintText(CHATBOT_ID ? DEFAULT_HINT_TEXT : NOT_CONFIGURED_HINT_TEXT);
+    setShowHint(true);
+  };
+
+  const hideHint = () => {
+    setShowHint(false);
+  };
 
   const toggleChat = () => {
     if (!CHATBOT_ID) {
-      setHintText('Chat is not configured yet');
+      setHintText(NOT_CONFIGURED_HINT_TEXT);
       setShowHint(true);
       window.setTimeout(() => {
         setHintText(DEFAULT_HINT_TEXT);
@@ -65,8 +73,11 @@ export default function ChatbaseBootstrap() {
         type="button"
         className="chatInviteButton"
         onClick={toggleChat}
+        onMouseEnter={showDefaultHint}
+        onMouseLeave={hideHint}
+        onFocus={showDefaultHint}
+        onBlur={hideHint}
         aria-label={CHATBOT_ID ? 'Toggle chat to talk about my experience' : 'Chat is not configured'}
-        title={CHATBOT_ID ? 'Ask about my experience' : 'Chat is not configured'}
       >
         <span className="chatInviteIcon" aria-hidden="true">
           🤖

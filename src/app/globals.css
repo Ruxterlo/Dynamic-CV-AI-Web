@@ -185,7 +185,7 @@ a:hover {
 
 .chatInviteNotification {
 	position: fixed;
-	right: 96px;
+	right: 164px;
 	bottom: 26px;
 	z-index: 43;
 	padding: 0.55rem 0.8rem;
@@ -197,6 +197,19 @@ a:hover {
 	font-weight: 600;
 	box-shadow: 0 8px 18px rgba(15, 23, 42, 0.13);
 	white-space: nowrap;
+}
+
+.chatInviteNotification::after {
+	content: '';
+	position: absolute;
+	right: -6px;
+	top: 50%;
+	width: 10px;
+	height: 10px;
+	transform: translateY(-50%) rotate(45deg);
+	background: rgba(255, 255, 255, 0.96);
+	border-top: 1px solid rgba(148, 163, 184, 0.42);
+	border-right: 1px solid rgba(148, 163, 184, 0.42);
 }
 
 .chatIframePanel {
@@ -243,7 +256,7 @@ a:hover {
 	}
 
 	.chatInviteNotification {
-		right: 86px;
+		right: 76px;
 		bottom: 24px;
 		max-width: 46vw;
 		overflow: hidden;
