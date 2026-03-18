@@ -1,66 +1,87 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { fetchCvSource } from '@/lib/cvSource';
 
-type ChatbaseMethodCall = [string, ...unknown[]];
-type ChatbaseFunction = ((method: string, ...args: unknown[]) => unknown) & {
-  q?: ChatbaseMethodCall[];
+type RouteItem = {
+  href: string;
+  label: string;
 };
 
-declare global {
-  interface Window {
-    chatbase?: ChatbaseFunction;
+const SECTION_ROUTE_MAP: Record<string, string> = {
+  'Professional Summary': '/professional-summary',
+  'Technology Skills': '/technology-skills',
+  Education: '/education',
+  'Work Experience': '/work-experience',
+  'Recent Projects': '/projects',
+  Languages: '/languages',
+  'Flexibility & Mobility': '/flexibility-mobility',
+  'Hobbies & Interests': '/hobbies-interests',
+  'Clients & Companies': '/clients-companies',
+  'Portfolio & Professional Profiles': '/portfolio-profiles',
+};
+
+const normalizeLatexText = (value: string) =>
+  value.replace(/\\&/g, '&').replace(/\\_/g, '_').replace(/\s+/g, ' ').trim();
+
+const extractHeader = (cvText: string) => {
+  const firstName = cvText.match(/\\newcommand\{\\FirstName\}\{([^}]+)\}/)?.[1]?.trim() ?? '';
+  const middleName = cvText.match(/\\newcommand\{\\MiddleName\}\{([^}]+)\}/)?.[1]?.trim() ?? '';
+  const lastName = cvText.match(/\\newcommand\{\\LastName\}\{([^}]+)\}/)?.[1]?.trim() ?? '';
+
+  const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
+
+  const roleRaw = cvText.match(/\{\\Large\s+([^}]+)\}\s*\\\[/)?.[1]?.trim() ?? '';
+  const role = normalizeLatexText(roleRaw);
+
+  return {
+    fullName: fullName || 'Professional CV',
+    role: role || 'Professional Profile',
+  };
+};
+
+const extractSummaryIntro = (cvText: string) => {
+  const summaryMatch = cvText.match(/\\cvsection\{Professional Summary\}([\s\S]*?)(?=\\cvsection|$)/);
+  if (!summaryMatch) {
+    return 'Select a section to explore my background, experience, and projects.';
   }
-}
 
-export default function Home() {
+  const summaryText = normalizeLatexText(
+    summaryMatch[1]
+      .replace(/%.*$/gm, '')
+      .replace(/\\vspace\{[^}]*\}/g, '')
+      .replace(/\\textbf\{([^}]*)\}/g, '$1')
+  );
 
-  useEffect(() => {
-    const onLoad = function () {
-      if (document.getElementById('poxQPHRMuAbl7easbR0Mk')) {
-        return;
-      }
+  const firstSentence = summaryText.match(/^(.{60,220}?[.!?])(?:\s|$)/)?.[1]?.trim();
+  return firstSentence || summaryText.slice(0, 220).trim() || 'Select a section to explore my background, experience, and projects.';
+};
 
-      const script = document.createElement('script');
-      script.src = 'https://www.chatbase.co/embed.min.js';
-      script.id = 'poxQPHRMuAbl7easbR0Mk'; // tu chatbotId
-      script.setAttribute('domain', 'www.chatbase.co');
-      document.body.appendChild(script);
-    };
+const extractRoutes = (cvText: string): RouteItem[] => {
+  const sectionRegex = /\\cvsection\{([^}]*)\}(?:\[[^\]]*\])?/g;
+  const seen = new Set<string>();
+  const routeItems: RouteItem[] = [];
 
-    (function () {
-      if (!window.chatbase || window.chatbase("getState") !== "initialized") {
+  let match: RegExpExecArray | null;
+  while ((match = sectionRegex.exec(cvText)) !== null) {
+    const normalizedSection = normalizeLatexText(match[1]);
 
-        const chatbaseStub: ChatbaseFunction = (method: string, ...args: unknown[]) => {
-          if (!chatbaseStub.q) {
-            chatbaseStub.q = [];
-          }
-          chatbaseStub.q.push([method, ...args]);
-          return undefined;
-        };
+    if (!normalizedSection || seen.has(normalizedSection)) {
+      continue;
+    }
 
-        window.chatbase = new Proxy(chatbaseStub, {
-          get(target: ChatbaseFunction, prop: string | symbol) {
-            if (prop === "q") return target.q;
-            return (...args: unknown[]) => target(String(prop), ...args);
-          },
-        });
-      }
+    const href = SECTION_ROUTE_MAP[normalizedSection];
+    if (!href) {
+      continue;
+    }
 
-      if (document.readyState === "complete") {
-        onLoad();
-      } else {
-        window.addEventListener("load", onLoad);
-      }
-    })();
+    seen.add(normalizedSection);
+    routeItems.push({ href, label: normalizedSection === 'Recent Projects' ? 'Projects' : normalizedSection });
+  }
 
-    return () => {
-      window.removeEventListener('load', onLoad);
-    };
-  }, []);
+  if (routeItems.length > 0) {
+    return routeItems;
+  }
 
-  const routes = [
+  return [
     { href: '/professional-summary', label: 'Professional Summary' },
     { href: '/technology-skills', label: 'Technology Skills' },
     { href: '/education', label: 'Education' },
@@ -72,11 +93,22 @@ export default function Home() {
     { href: '/clients-companies', label: 'Clients & Companies' },
     { href: '/portfolio-profiles', label: 'Portfolio & Professional Profiles' },
   ];
+};
+
+export default async function Home() {
+  const cvText = await fetchCvSource();
+  const header = extractHeader(cvText);
+  const intro = extractSummaryIntro(cvText);
+  const routes = extractRoutes(cvText);
 
   return (
     <main>
-      <h1>Welcome to My Dynamic CV</h1>
-      <p>Select a section to view:</p>
+      <section className="homeHero">
+        <p className="homeHeroBadge">Dynamic CV</p>
+        <h1>{header.fullName}</h1>
+        <p className="homeHeroRole">{header.role}</p>
+        <p>{intro}</p>
+      </section>
 
       <ul className="homeGrid">
         {routes.map(route => (
