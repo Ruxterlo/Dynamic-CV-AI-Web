@@ -185,7 +185,7 @@ a:hover {
 
 .chatInviteNotification {
 	position: fixed;
-	right: 160px;
+	right: 96px;
 	bottom: 26px;
 	z-index: 43;
 	padding: 0.55rem 0.8rem;
@@ -199,6 +199,37 @@ a:hover {
 	white-space: nowrap;
 }
 
+.chatIframePanel {
+	position: fixed;
+	right: 16px;
+	bottom: 78px;
+	z-index: 41;
+	width: min(360px, calc(100vw - 24px));
+	height: min(500px, 62vh);
+	border-radius: 14px;
+	border: 1px solid rgba(148, 163, 184, 0.45);
+	background: #ffffff;
+	box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(12px) scale(0.98);
+	transform-origin: bottom right;
+	transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.chatIframePanel.is-open {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0) scale(1);
+}
+
+.chatIframePanel iframe {
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
 @media (max-width: 640px) {
 	main {
 		width: min(980px, 94vw);
@@ -206,16 +237,23 @@ a:hover {
 	}
 
 	.chatInviteButton {
-		right: 84px;
+		right: 16px;
 		width: 48px;
 		height: 48px;
 	}
 
 	.chatInviteNotification {
-		right: 140px;
+		right: 86px;
 		bottom: 24px;
 		max-width: 46vw;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.chatIframePanel {
+		right: 10px;
+		bottom: 72px;
+		width: calc(100vw - 20px);
+		height: min(520px, 58vh);
 	}
 }
