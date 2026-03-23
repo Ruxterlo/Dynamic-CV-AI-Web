@@ -5,7 +5,20 @@ export default async function HobbiesInterests() {
   const cvText = await fetchCvSource();
 
   // Extraer la sección
-  let hobbiesText = extractSection(cvText, 'Hobbies \\& Interests');
+  let hobbiesText = extractSection(cvText, [
+    'Hobbies & Interests',
+    'Hobbies and Interests',
+    'Interests',
+  ]);
+
+  if (hobbiesText === 'Section not found') {
+    return (
+      <main style={{ padding: '2rem' }}>
+        <h1>Hobbies & Interests</h1>
+        <p>Section not found.</p>
+      </main>
+    );
+  }
 
   // Limpiar saltos, espacios y comandos innecesarios
   hobbiesText = hobbiesText

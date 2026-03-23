@@ -13,7 +13,16 @@ export default async function Education() {
   const cvText = await fetchCvSource();
 
   // 1️⃣ Extraer sección
-  let education = extractSection(cvText, 'Education');
+  let education = extractSection(cvText, ['Education', 'Academic Background', 'Academic Formation']);
+
+  if (education === 'Section not found') {
+    return (
+      <main style={{ padding: '2rem' }}>
+        <h1>Education</h1>
+        <p>Section not found.</p>
+      </main>
+    );
+  }
 
   // 2️⃣ Limpiar símbolos innecesarios (mantener saltos)
   education = education.replace(/<(?!\/?strong).*?>/g, ''); // quitar tags excepto strong

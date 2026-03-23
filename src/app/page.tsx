@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { fetchCvSource } from '@/lib/cvSource';
+import { extractSection } from '@/lib/latexParser';
 
 type RouteItem = {
   href: string;
@@ -8,19 +9,49 @@ type RouteItem = {
 
 const SECTION_ROUTE_MAP: Record<string, string> = {
   'Professional Summary': '/professional-summary',
+  Summary: '/professional-summary',
+  Profile: '/professional-summary',
   'Technology Skills': '/technology-skills',
+  'Technical Skills': '/technology-skills',
+  Skills: '/technology-skills',
   Education: '/education',
+  'Academic Background': '/education',
   'Work Experience': '/work-experience',
+  'Professional Experience': '/work-experience',
+  Experience: '/work-experience',
   'Recent Projects': '/projects',
+  Projects: '/projects',
   Languages: '/languages',
+  'Language Skills': '/languages',
   'Flexibility & Mobility': '/flexibility-mobility',
+  'Flexibility and Mobility': '/flexibility-mobility',
+  Mobility: '/flexibility-mobility',
   'Hobbies & Interests': '/hobbies-interests',
+  'Hobbies and Interests': '/hobbies-interests',
+  Interests: '/hobbies-interests',
   'Clients & Companies': '/clients-companies',
+  'Clients and Companies': '/clients-companies',
+  Clients: '/clients-companies',
+  Companies: '/clients-companies',
   'Portfolio & Professional Profiles': '/portfolio-profiles',
+  'Portfolio and Professional Profiles': '/portfolio-profiles',
+  'Profiles & Portfolio': '/portfolio-profiles',
+  'Professional Profiles': '/portfolio-profiles',
+  Portfolio: '/portfolio-profiles',
 };
 
 const normalizeLatexText = (value: string) =>
   value.replace(/\\&/g, '&').replace(/\\_/g, '_').replace(/\s+/g, ' ').trim();
+
+const normalizeSectionKey = (value: string) =>
+  normalizeLatexText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const SECTION_ROUTE_BY_KEY = Object.fromEntries(
+  Object.entries(SECTION_ROUTE_MAP).map(([label, href]) => [normalizeSectionKey(label), href])
+) as Record<string, string>;
 
 const extractHeader = (cvText: string) => {
   const firstName = cvText.match(/\\newcommand\{\\FirstName\}\{([^}]+)\}/)?.[1]?.trim() ?? '';
@@ -53,24 +84,19 @@ const extractHeader = (cvText: string) => {
 };
 
 const extractSummaryIntro = (cvText: string) => {
-  const summaryMatch = cvText.match(/\\cvsection\{Professional Summary\}([\s\S]*?)(?=\\cvsection|$)/);
-  if (!summaryMatch) {
+  const summaryText = extractSection(cvText, ['Professional Summary', 'Summary', 'Profile']);
+  if (summaryText === 'Section not found') {
     return 'Select a section to explore my background, experience, and projects.';
   }
 
-  const summaryText = normalizeLatexText(
-    summaryMatch[1]
-      .replace(/%.*$/gm, '')
-      .replace(/\\vspace\{[^}]*\}/g, '')
-      .replace(/\\textbf\{([^}]*)\}/g, '$1')
-  );
+  const normalizedSummary = normalizeLatexText(summaryText);
 
-  const firstSentence = summaryText.match(/^(.{60,220}?[.!?])(?:\s|$)/)?.[1]?.trim();
-  return firstSentence || summaryText.slice(0, 220).trim() || 'Select a section to explore my background, experience, and projects.';
+  const firstSentence = normalizedSummary.match(/^(.{60,220}?[.!?])(?:\s|$)/)?.[1]?.trim();
+  return firstSentence || normalizedSummary.slice(0, 220).trim() || 'Select a section to explore my background, experience, and projects.';
 };
 
 const extractRoutes = (cvText: string): RouteItem[] => {
-  const sectionRegex = /\\cvsection\{([^}]*)\}(?:\[[^\]]*\])?/g;
+  const sectionRegex = /\\(?:cvsection|section\*?)\{([^}]*)\}(?:\[[^\]]*\])?/g;
   const seen = new Set<string>();
   const routeItems: RouteItem[] = [];
 
@@ -82,7 +108,7 @@ const extractRoutes = (cvText: string): RouteItem[] => {
       continue;
     }
 
-    const href = SECTION_ROUTE_MAP[normalizedSection];
+    const href = SECTION_ROUTE_BY_KEY[normalizeSectionKey(normalizedSection)];
     if (!href) {
       continue;
     }

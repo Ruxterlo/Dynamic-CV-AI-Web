@@ -14,10 +14,19 @@ Dynamic CV web application built with Next.js (App Router) and TypeScript.
 2. Create environment file:
 	- Copy `.env.example` to `.env.local`
 	- Set real secret values in `.env.local`
+	- Set `CV_SOURCE_URL` to the public raw `.tex` link for your CV source
 3. Start development server:
 	- `npm run dev`
 4. Open:
 	- http://localhost:3000
+
+## CV Source Link
+- The app reads CV data only from `CV_SOURCE_URL` (there is no hardcoded fallback in source code).
+- To switch CVs, change only this environment variable:
+	- GitHub: use a raw `.tex` file URL (for example from `raw.githubusercontent.com`)
+	- Overleaf: use a public raw `.tex` URL
+- Changes are reflected on the next page load in development.
+- In production, changing environment variables may require a restart or redeploy depending on your host.
 
 ## Available Scripts
 - `npm run dev` - Start development server

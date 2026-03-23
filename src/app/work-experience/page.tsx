@@ -13,7 +13,16 @@ export default async function WorkExperience() {
   const cvText = await fetchCvSource();
 
   // 1️⃣ Extraer sección
-  let work = extractSection(cvText, 'Work Experience');
+  let work = extractSection(cvText, ['Work Experience', 'Professional Experience', 'Experience']);
+
+  if (work === 'Section not found') {
+    return (
+      <main style={{ padding: '2rem' }}>
+        <h1>Work Experience</h1>
+        <p>Section not found.</p>
+      </main>
+    );
+  }
 
   // 2️⃣ Limpiar símbolos innecesarios (NO eliminar saltos de línea)
   work = work.replace(/<(\/?strong).*?>/g, ''); // eliminar tags excepto strong

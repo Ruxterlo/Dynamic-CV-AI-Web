@@ -1,6 +1,7 @@
 import { fetchCvSource } from '@/lib/cvSource';
 import Image from 'next/image';
 import { resolveCompanyLogo } from '@/lib/logoFetcher';
+import { extractRawSection } from '@/lib/latexParser';
 
 type CompanyEntry = {
   companyName: string;
@@ -10,11 +11,14 @@ type CompanyEntry = {
 export default async function ClientsCompanies() {
   const cvText = await fetchCvSource();
 
-  // Capturar la sección
-  const sectionRegex = /\\cvsection\{Clients.*?Companies\}([\s\S]*?)(?=(\\cvsection|$))/;
-  const sectionMatch = cvText.match(sectionRegex);
+  const rawSection = extractRawSection(cvText, [
+    'Clients & Companies',
+    'Clients and Companies',
+    'Clients',
+    'Companies',
+  ]);
 
-  if (!sectionMatch) {
+  if (!rawSection) {
     return (
       <main style={{ padding: '2rem' }}>
         <h1>Clients & Companies</h1>
@@ -23,7 +27,7 @@ export default async function ClientsCompanies() {
     );
   }
 
-  let sectionText = sectionMatch[1];
+  let sectionText = rawSection;
 
   // Limpiar comandos LaTeX básicos
   sectionText = sectionText

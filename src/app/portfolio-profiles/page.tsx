@@ -1,14 +1,19 @@
 import { fetchCvSource } from '@/lib/cvSource';
 import Image from 'next/image';
+import { extractRawSection } from '@/lib/latexParser';
 
 export default async function PortfolioProfiles() {
   const cvText = await fetchCvSource();
 
-  // Capturar la sección
-  const sectionRegex = /\\cvsection\{Portfolio\s*(?:&|\\&)\s*Professional\s*Profiles\}([\s\S]*?)(?=(\\cvsection|$))/;
-  const sectionMatch = cvText.match(sectionRegex);
+  const rawSection = extractRawSection(cvText, [
+    'Portfolio & Professional Profiles',
+    'Portfolio and Professional Profiles',
+    'Portfolio',
+    'Professional Profiles',
+    'Profiles & Portfolio'
+  ]);
 
-  if (!sectionMatch) {
+  if (!rawSection) {
     return (
       <main style={{ padding: '2rem' }}>
         <h1>Portfolio & Professional Profiles</h1>
@@ -17,7 +22,7 @@ export default async function PortfolioProfiles() {
     );
   }
 
-  let sectionText = sectionMatch[1];
+  let sectionText = rawSection;
 
   // Limpiar comandos LaTeX básicos
   sectionText = sectionText
@@ -168,7 +173,7 @@ export default async function PortfolioProfiles() {
 
   return (
     <main style={{ padding: '2rem', maxWidth: '900px' }}>
-      <h1>Portfolio & Professional Profiles</h1>
+      <h1>Profiles & Portfolio</h1>
 
       <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {blocks.map((block, idx) => (

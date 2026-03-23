@@ -1,13 +1,12 @@
 import { fetchCvSource } from '@/lib/cvSource';
+import { extractSection } from '@/lib/latexParser';
 
 export default async function TechnologySkills() {
   const cvText = await fetchCvSource();
 
-  // Capturar toda la sección Technology Skills hasta el siguiente \cvsection o final
-  const sectionRegex = /\\cvsection\{Technology Skills\}([\s\S]*?)(?=(\\cvsection|$))/;
-  const sectionMatch = cvText.match(sectionRegex);
+  const sectionText = extractSection(cvText, ['Technology Skills', 'Technical Skills', 'Skills']);
 
-  if (!sectionMatch) {
+  if (sectionText === 'Section not found') {
     return (
       <main style={{ padding: '2rem' }}>
         <h1>Technology Skills</h1>
@@ -16,45 +15,10 @@ export default async function TechnologySkills() {
     );
   }
 
-  let sectionText = sectionMatch[1];
-
-  // Limpiar comandos LaTeX innecesarios
-  sectionText = sectionText
-    .replace(/\\setlength\{.*?\}\{.*?\}/g, '')
-    .replace(/\\\\/g, ' ')
-    .trim();
-
-  const blocks: string[] = [];
-
-  // 1️⃣ Extraer items dentro de itemize
-  const itemizeRegex = /\\begin\{itemize\}[\s\S]*?\\end\{itemize\}/g;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = itemizeRegex.exec(sectionText)) !== null) {
-    // Agregar contenido antes del itemize (texto fuera de itemize)
-    const beforeItemize = sectionText.slice(lastIndex, match.index).trim();
-    if (beforeItemize) blocks.push(beforeItemize);
-
-    // Extraer cada \item dentro del itemize
-    const itemText = match[0]
-      .replace(/\\begin\{itemize\}[\s\S]*?/, '')
-      .replace(/\\end\{itemize\}/, '')
-      .trim();
-
-    const itemRegex = /\\item\s+([\s\S]*?)(?=(\\item|$))/g;
-    let itemMatch;
-    while ((itemMatch = itemRegex.exec(itemText)) !== null) {
-      const item = itemMatch[1].trim();
-      if (item) blocks.push(item);
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Agregar cualquier texto después del último itemize
-  const afterItemize = sectionText.slice(lastIndex).trim();
-  if (afterItemize) blocks.push(afterItemize);
+  const blocks = sectionText
+    .split('\n')
+    .map(block => block.trim())
+    .filter(block => block.length > 0);
 
   // Función para asignar emoji según palabras clave
   const getEmoji = (text: string) => {

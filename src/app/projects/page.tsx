@@ -1,13 +1,12 @@
 import { fetchCvSource } from '@/lib/cvSource';
+import { extractSection } from '@/lib/latexParser';
 
 export default async function Projects() {
   const cvText = await fetchCvSource();
 
-  // Capturar toda la sección de Projects
-  const sectionRegex = /\\cvsection\{Recent Projects\}([\s\S]*?)\\end\{itemize\}/;
-  const sectionMatch = cvText.match(sectionRegex);
+  const projectsText = extractSection(cvText, ['Recent Projects', 'Projects', 'Project Experience']);
 
-  if (!sectionMatch) {
+  if (projectsText === 'Section not found') {
     return (
       <main style={{ padding: '2rem' }}>
         <h1>Projects</h1>
@@ -16,22 +15,10 @@ export default async function Projects() {
     );
   }
 
-  let projectsText = sectionMatch[1];
-
-  // Limpiar comandos LaTeX innecesarios
-  projectsText = projectsText
-    .replace(/\\setlength\{.*?\}\{.*?\}/g, '')
-    .replace(/\\\\/g, ' ')
-    .trim();
-
-  // Separar cada \item como bloque independiente
-  const itemRegex = /\\item\s+([\s\S]*?)(?=(\\item|$))/g;
-  const projectItems: string[] = [];
-  let match;
-  while ((match = itemRegex.exec(projectsText)) !== null) {
-    const item = match[1].trim();
-    if (item) projectItems.push(item);
-  }
+  const projectItems = projectsText
+    .split('\n')
+    .map(item => item.trim())
+    .filter(item => item.length > 0);
 
   // Función para asignar emoji basado en palabras clave dentro del título
   const getEmoji = (text: string) => {

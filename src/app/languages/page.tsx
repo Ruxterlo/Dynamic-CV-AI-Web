@@ -1,5 +1,6 @@
 import { fetchCvSource } from '@/lib/cvSource';
 import Image from 'next/image';
+import { extractRawSection } from '@/lib/latexParser';
 
 // Mapa de idioma → código de país en minúsculas
 const languageToCountryCode: Record<string, string> = {
@@ -79,11 +80,9 @@ const languageToCountryCode: Record<string, string> = {
 export default async function Languages() {
   const cvText = await fetchCvSource();
 
-  // Capturar la sección Languages
-  const sectionRegex = /\\cvsection\{Languages\}([\s\S]*?)(?=(\\cvsection|$))/;
-  const sectionMatch = cvText.match(sectionRegex);
+  const rawSection = extractRawSection(cvText, ['Languages', 'Language Skills']);
 
-  if (!sectionMatch) {
+  if (!rawSection) {
     return (
       <main style={{ padding: '2rem' }}>
         <h1>Languages</h1>
@@ -92,7 +91,7 @@ export default async function Languages() {
     );
   }
 
-  const sectionText = sectionMatch[1]
+  const sectionText = rawSection
     .replace(/\\setlength\{.*?\}\{.*?\}/g, '')
     .replace(/\\\\/g, ' ')
     .trim();

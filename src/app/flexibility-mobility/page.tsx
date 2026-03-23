@@ -1,35 +1,28 @@
 import { fetchCvSource } from '@/lib/cvSource';
+import { extractSection } from '@/lib/latexParser';
 
 export default async function FlexibilityMobility() {
   const cvText = await fetchCvSource();
 
-  // Regex para capturar la sección completa
-  const sectionRegex = /\\cvsection\{Flexibility\s*\\&\s*Mobility\}([\s\S]*?)\\end\{itemize\}/;
-  const sectionMatch = cvText.match(sectionRegex);
+  const mobilityText = extractSection(cvText, [
+    'Flexibility & Mobility',
+    'Flexibility and Mobility',
+    'Mobility',
+  ]);
 
-  if (!sectionMatch) return (
+  if (mobilityText === 'Section not found') {
+    return (
     <main style={{ padding: '2rem' }}>
       <h1>Flexibility & Mobility</h1>
       <p>Sección no encontrada en el CV.</p>
     </main>
-  );
-
-  let mobilityText = sectionMatch[1];
-
-  // Limpiar comandos LaTeX innecesarios
-  mobilityText = mobilityText
-    .replace(/\\setlength\{.*?\}\{.*?\}/g, '')
-    .replace(/\\\\/g, ' ')
-    .trim();
-
-  // Regex para separar cada item correctamente, modo dotall para incluir saltos de línea
-  const itemRegex = /\\item(?:\[[^\]]*\])?\s+([\s\S]*?)(?=(\\item|$))/g;
-  const mobilityItems: string[] = [];
-  let match;
-  while ((match = itemRegex.exec(mobilityText)) !== null) {
-    const item = match[1].trim();
-    if (item) mobilityItems.push(item);
+    );
   }
+
+  const mobilityItems = mobilityText
+    .split('\n')
+    .map(item => item.trim())
+    .filter(item => item.length > 0);
 
   // Iconos según LaTeX \faIcon
   const getIcon = (text: string) => {
