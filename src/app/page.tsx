@@ -27,10 +27,24 @@ const extractHeader = (cvText: string) => {
   const middleName = cvText.match(/\\newcommand\{\\MiddleName\}\{([^}]+)\}/)?.[1]?.trim() ?? '';
   const lastName = cvText.match(/\\newcommand\{\\LastName\}\{([^}]+)\}/)?.[1]?.trim() ?? '';
 
-  const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
+  const fallbackName =
+    cvText
+      .match(/\{\\Huge[\s\S]*?\{([^}]*)\}\s*\}/)?.[1]
+      ?.replace(/\\MakeUppercase\s*/g, '')
+      ?.trim() ?? '';
 
-  const roleRaw = cvText.match(/\{\\Large\s+([^}]+)\}\s*\\\[/)?.[1]?.trim() ?? '';
-  const role = normalizeLatexText(roleRaw);
+  const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ').trim() || normalizeLatexText(fallbackName);
+
+  const roleCandidates = [
+    cvText.match(/\{\\Large\s+([\s\S]*?)\}\s*\\\\\[[^\]]*\]/)?.[1],
+    cvText.match(/\{\\Large\s+([\s\S]*?)\}\s*\\\\/)?.[1],
+    cvText.match(/\\newcommand\{\\(?:Role|Title|Position)\}\{([^}]*)\}/i)?.[1],
+    cvText.match(/\\begin\{center\}[\s\S]*?\{\\Huge[\s\S]*?\}\s*\\\\\[[^\]]*\]\s*\{\\Large\s+([\s\S]*?)\}\s*\\\\/)
+      ?. [1],
+  ];
+
+  const roleRaw = roleCandidates.find(candidate => !!candidate && candidate.trim().length > 0) ?? '';
+  const role = normalizeLatexText(roleRaw.replace(/\\textbf\{([^}]*)\}/g, '$1'));
 
   return {
     fullName: fullName || 'Professional CV',
@@ -95,6 +109,57 @@ const extractRoutes = (cvText: string): RouteItem[] => {
   ];
 };
 
+type IconRule = {
+  icon: string;
+  keywords: string[];
+};
+
+const ICON_RULES: IconRule[] = [
+  { icon: '🧾', keywords: ['summary', 'profile', 'resumen', 'perfil', 'about'] },
+  { icon: '🛠️', keywords: ['technology', 'tech', 'skills', 'skill', 'herramienta', 'competencia'] },
+  { icon: '🎓', keywords: ['education', 'academic', 'study', 'degree', 'formacion', 'educacion'] },
+  { icon: '💼', keywords: ['work', 'experience', 'career', 'employment', 'job', 'empleo', 'laboral'] },
+  { icon: '🚀', keywords: ['project', 'projects', 'portfolio', 'initiative', 'proyecto'] },
+  { icon: '🗣️', keywords: ['language', 'languages', 'idioma', 'idiomas'] },
+  { icon: '🌍', keywords: ['mobility', 'travel', 'relocation', 'remote', 'movilidad', 'viaje'] },
+  { icon: '🎯', keywords: ['hobbies', 'interests', 'hobby', 'interes', 'intereses'] },
+  { icon: '🤝', keywords: ['clients', 'companies', 'customer', 'partners', 'clientes', 'companias'] },
+  { icon: '🔗', keywords: ['link', 'links', 'website', 'web', 'profile', 'profiles', 'social'] },
+  { icon: '🏅', keywords: ['certification', 'certifications', 'award', 'awards', 'certificacion'] },
+];
+
+const scoreRule = (normalizedLabel: string, rule: IconRule) => {
+  let score = 0;
+
+  rule.keywords.forEach(keyword => {
+    if (normalizedLabel.includes(keyword)) {
+      score += keyword.length;
+    }
+  });
+
+  return score;
+};
+
+const getRouteIcon = (label: string) => {
+  const normalized = label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  let bestIcon = '📁';
+  let bestScore = 0;
+
+  ICON_RULES.forEach(rule => {
+    const score = scoreRule(normalized, rule);
+    if (score > bestScore) {
+      bestScore = score;
+      bestIcon = rule.icon;
+    }
+  });
+
+  return bestIcon;
+};
+
 export default async function Home() {
   const cvText = await fetchCvSource();
   const header = extractHeader(cvText);
@@ -114,7 +179,10 @@ export default async function Home() {
         {routes.map(route => (
           <li key={route.href}>
             <Link href={route.href} className="homeCard">
-              {route.label}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span aria-hidden="true">{getRouteIcon(route.label)}</span>
+                <span>{route.label}</span>
+              </span>
             </Link>
           </li>
         ))}

@@ -1,4 +1,11 @@
 import { fetchCvSource } from '@/lib/cvSource';
+import Image from 'next/image';
+import { resolveCompanyLogo } from '@/lib/logoFetcher';
+
+type CompanyEntry = {
+  companyName: string;
+  website?: string;
+};
 
 export default async function ClientsCompanies() {
   const cvText = await fetchCvSource();
@@ -52,55 +59,179 @@ export default async function ClientsCompanies() {
     });
   }
 
-  // 🎨 Emojis inteligentes según tipo de cliente/empresa
-  const getEmoji = (text: string) => {
-    const lower = text.toLowerCase();
+  const latexToPlainText = (text: string) =>
+    text
+      .replace(/\\textbf\{([^}]*)\}/g, '$1')
+      .replace(/\\emph\{([^}]*)\}/g, '$1')
+      .replace(/\\href\{([^}]*)\}\{([^}]*)\}/g, '$2')
+      .replace(/\\&/g, '&')
+      .replace(/\\[a-zA-Z]+/g, ' ')
+      .replace(/[{}]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    if (lower.includes('google') || lower.includes('tech')) return '💻';
-    if (lower.includes('bank') || lower.includes('finance')) return '🏦';
-    if (lower.includes('university') || lower.includes('education')) return '🎓';
-    if (lower.includes('startup')) return '🚀';
-    if (lower.includes('health') || lower.includes('medical')) return '🏥';
-    if (lower.includes('retail') || lower.includes('store')) return '🛍️';
-    if (lower.includes('consulting')) return '📊';
-    if (lower.includes('government')) return '🏛️';
-    if (lower.includes('energy')) return '⚡';
-    if (lower.includes('media')) return '🎬';
+  const extractWebsite = (text: string) => {
+    const hrefUrl = text.match(/\\href\{([^}]*)\}/)?.[1]?.trim();
+    if (hrefUrl) {
+      return hrefUrl;
+    }
 
-    return '🏢'; // default empresa
+    const inlineUrl = text.match(/https?:\/\/[^\s}]+/i)?.[0]?.trim();
+    if (inlineUrl) {
+      return inlineUrl;
+    }
+
+    return undefined;
   };
 
-  // Convertir LaTeX a HTML básico
-  const latexToHtml = (text: string) =>
-    text
-      .replace(/\\textbf\{(.+?)\}/g, '<strong>$1</strong>')
-      .replace(/\\&/g, '&');
+  const extractCompanyName = (text: string) => {
+    const plain = latexToPlainText(text);
+
+    const beforeColon = plain.split(':')[0]?.trim();
+    if (beforeColon) {
+      return beforeColon;
+    }
+
+    const beforeDash = plain.split('-')[0]?.trim();
+    if (beforeDash) {
+      return beforeDash;
+    }
+
+    return plain;
+  };
+
+  const toCompanyEntry = (block: string): CompanyEntry | null => {
+    const companyName = extractCompanyName(block);
+    if (!companyName) {
+      return null;
+    }
+
+    return {
+      companyName,
+      website: extractWebsite(block),
+    };
+  };
+
+  const entries = blocks
+    .map(toCompanyEntry)
+    .filter((entry): entry is CompanyEntry => entry !== null);
+
+  const companies = await Promise.all(
+    entries.map(async entry => {
+      const logo = await resolveCompanyLogo({
+        companyName: entry.companyName,
+        websiteHint: entry.website,
+      });
+
+      return {
+        ...entry,
+        website: logo.website ?? entry.website,
+        domain: logo.domain,
+        logoUrl: logo.logoUrl,
+        logoSource: logo.source,
+      };
+    })
+  );
 
   return (
     <main style={{ padding: '2rem', maxWidth: '900px' }}>
       <h1>Clients & Companies</h1>
 
-      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {blocks.map((block, idx) => (
+      <div
+        style={{
+          marginTop: '1rem',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '0.9rem',
+        }}
+      >
+        {companies.map((company, idx) => (
           <div
             key={idx}
             style={{
-              padding: '0.6rem 1rem',
-              borderRadius: '6px',
+              padding: '0.95rem 0.75rem',
+              borderRadius: '10px',
               backgroundColor: '#f5f5f5',
+              border: '1px solid #ececec',
               display: 'flex',
-              gap: '0.6rem',
+              flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.65rem',
               fontSize: '14px',
+              textAlign: 'center',
+              minHeight: '130px',
             }}
           >
-            {/* Emoji */}
-            <span style={{ fontSize: '20px' }}>{getEmoji(block)}</span>
+            {company.website ? (
+              <a
+                href={company.website}
+                target="_blank"
+                rel="noreferrer noopener"
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e2e2',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+                title={company.logoSource === 'none' ? `Open ${company.companyName} website` : `Open ${company.companyName} (${company.logoSource})`}
+              >
+                {company.logoUrl ? (
+                  <Image
+                    src={company.logoUrl}
+                    alt={`${company.companyName} logo`}
+                    width={56}
+                    height={56}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    unoptimized
+                  />
+                ) : (
+                  company.companyName.slice(0, 2).toUpperCase()
+                )}
+              </a>
+            ) : (
+              <span
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e2e2',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                }}
+                title="No website available"
+              >
+                {company.logoUrl ? (
+                  <Image
+                    src={company.logoUrl}
+                    alt={`${company.companyName} logo`}
+                    width={56}
+                    height={56}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    unoptimized
+                  />
+                ) : (
+                  company.companyName.slice(0, 2).toUpperCase()
+                )}
+              </span>
+            )}
 
-            {/* Texto */}
-            <span
-              dangerouslySetInnerHTML={{ __html: latexToHtml(block) }}
-            />
+            <strong>{company.companyName}</strong>
           </div>
         ))}
       </div>
