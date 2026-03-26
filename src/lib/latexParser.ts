@@ -51,6 +51,7 @@ function findSectionRaw(cvText: string, sectionNames: string[]): string | null {
 
 const normalizeInlineLatex = (value: string): string =>
   value
+    .replace(/\\(?:begin|end)\{[^}]*\}/g, ' ')
     .replace(/\\qrcode(?:\[[^\]]*\])?\{[^}]*\}/g, '')
     .replace(/\\href\{([^}]*)\}\{([^}]*)\}/g, '$2')
     .replace(/\\fa[A-Za-z]+(?:\{[^}]*\})?/g, '')
