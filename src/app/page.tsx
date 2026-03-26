@@ -3,11 +3,29 @@ import { fetchCvSource } from '@/lib/cvSource';
 import { extractSection } from '@/lib/latexParser';
 import ProtectedImage from '@/components/ProtectedImage';
 
+type IconProps = {
+  className?: string;
+};
+
 const CV_SOURCE_URL = process.env.CV_SOURCE_URL?.trim() || '';
 
 type RouteItem = {
   href: string;
   label: string;
+};
+
+type HeaderContact = {
+  href: string;
+  label: string;
+};
+
+type HeaderContacts = {
+  email: HeaderContact | null;
+  whatsapp: HeaderContact | null;
+  location: HeaderContact | null;
+  countryName: string;
+  countryCode: string;
+  countryFlag: string;
 };
 
 const SECTION_ROUTE_MAP: Record<string, string> = {
@@ -45,6 +63,45 @@ const SECTION_ROUTE_MAP: Record<string, string> = {
 
 const normalizeLatexText = (value: string) =>
   value.replace(/\\&/g, '&').replace(/\\_/g, '_').replace(/\s+/g, ' ').trim();
+
+const normalizeCountryKey = (value: string) =>
+  normalizeLatexText(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const COUNTRY_CODE_BY_NAME: Record<string, string> = {
+  ireland: 'IE',
+  irlanda: 'IE',
+  spain: 'ES',
+  espana: 'ES',
+  germany: 'DE',
+  alemania: 'DE',
+  france: 'FR',
+  francia: 'FR',
+  italy: 'IT',
+  italia: 'IT',
+  portugal: 'PT',
+  uk: 'GB',
+  'united kingdom': 'GB',
+  'reino unido': 'GB',
+  usa: 'US',
+  'united states': 'US',
+  'estados unidos': 'US',
+};
+
+const countryCodeToFlag = (countryCode: string): string => {
+  const code = countryCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) {
+    return '🌍';
+  }
+
+  const regionalIndicatorOffset = 127397;
+  return String.fromCodePoint(code.charCodeAt(0) + regionalIndicatorOffset, code.charCodeAt(1) + regionalIndicatorOffset);
+};
 
 const normalizeSectionKey = (value: string) =>
   normalizeLatexText(value)
@@ -98,6 +155,23 @@ const extractSummaryIntro = (cvText: string) => {
   return firstSentence || normalizedSummary.slice(0, 220).trim() || 'Select a section to explore my background, experience, and projects.';
 };
 
+const detectCountryFromLocation = (locationLabel: string) => {
+  const pieces = normalizeLatexText(locationLabel)
+    .split(',')
+    .map(piece => piece.trim())
+    .filter(Boolean);
+
+  const countryCandidate = pieces[pieces.length - 1] ?? '';
+  const key = normalizeCountryKey(countryCandidate);
+  const countryCode = COUNTRY_CODE_BY_NAME[key] ?? '';
+
+  return {
+    countryName: countryCandidate || 'your location',
+    countryCode,
+    countryFlag: countryCodeToFlag(countryCode),
+  };
+};
+
 const normalizeLatexAssetPath = (assetPath: string): string =>
   assetPath
     .replace(/\\%/g, '%')
@@ -128,6 +202,86 @@ const resolveCvAssetUrl = (assetPath: string): string | null => {
       return null;
     }
   }
+};
+
+const extractContacts = (cvText: string): HeaderContacts => {
+  const hrefRegex = /\\href\s*\{([^}]*)\}\s*\{([^}]*)\}/g;
+  const links = [...cvText.matchAll(hrefRegex)]
+    .map(match => ({
+      href: normalizeLatexText(match[1] ?? ''),
+      label: normalizeLatexText(match[2] ?? ''),
+    }))
+    .filter(link => !!link.href && !!link.label);
+
+  const email = links.find(link => link.href.toLowerCase().startsWith('mailto:')) ?? null;
+  const whatsapp = links.find(link => /wa\.me|whatsapp/i.test(link.href)) ?? null;
+  const locationByUrl = links.find(link => /share\.google|google\.|maps\.|openstreetmap|map/i.test(link.href)) ?? null;
+  const locationByLabel = links.find(link => /location|ubicacion|city|country|dublin|ireland|irlanda/i.test(link.label)) ?? null;
+
+  const fallbackLocationLabel =
+    cvText.match(/(?:location|ubicaci[oó]n)\s*:\s*\\href\s*\{[^}]*\}\s*\{([^}]*)\}/i)?.[1] ??
+    cvText.match(/(?:location|ubicaci[oó]n)\s*:\s*([^|\\\n]+)/i)?.[1] ??
+    '';
+
+  const locationFallback = normalizeLatexText(fallbackLocationLabel);
+
+  const location =
+    locationByUrl ??
+    locationByLabel ??
+    (locationFallback
+      ? {
+          href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationFallback)}`,
+          label: locationFallback,
+        }
+      : null);
+
+  const country = location
+    ? detectCountryFromLocation(location.label)
+    : { countryName: '', countryCode: '', countryFlag: '🌍' };
+
+  return {
+    email,
+    whatsapp,
+    location,
+    countryName: country.countryName,
+    countryCode: country.countryCode,
+    countryFlag: country.countryFlag,
+  };
+};
+
+const CountryFlagIcon = ({ className, countryCode }: IconProps & { countryCode: string }) => {
+  const code = countryCode.trim().toUpperCase();
+
+  if (code === 'IE') {
+    return (
+      <svg className={className} viewBox="0 0 36 24" aria-hidden="true">
+        <rect x="0" y="0" width="12" height="24" fill="#169B62" />
+        <rect x="12" y="0" width="12" height="24" fill="#FFFFFF" />
+        <rect x="24" y="0" width="12" height="24" fill="#FF883E" />
+        <rect x="0.5" y="0.5" width="35" height="23" rx="2" fill="none" stroke="rgba(15,23,42,0.16)" />
+      </svg>
+    );
+  }
+
+  if (code === 'ES') {
+    return (
+      <svg className={className} viewBox="0 0 36 24" aria-hidden="true">
+        <rect x="0" y="0" width="36" height="24" fill="#AA151B" />
+        <rect x="0" y="6" width="36" height="12" fill="#F1BF00" />
+        <rect x="0.5" y="0.5" width="35" height="23" rx="2" fill="none" stroke="rgba(15,23,42,0.16)" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className={className} viewBox="0 0 36 24" aria-hidden="true">
+      <rect x="0" y="0" width="36" height="24" rx="2" fill="#E2E8F0" />
+      <text x="18" y="15" textAnchor="middle" fontSize="9" fontWeight="700" fill="#334155">
+        {code || '??'}
+      </text>
+      <rect x="0.5" y="0.5" width="35" height="23" rx="2" fill="none" stroke="rgba(15,23,42,0.16)" />
+    </svg>
+  );
 };
 
 const extractProfileImageUrl = (cvText: string): string | null => {
@@ -238,12 +392,61 @@ const getRouteIcon = (label: string) => {
   return bestIcon;
 };
 
+const MailIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5v9A1.5 1.5 0 0 1 18.5 18h-13A1.5 1.5 0 0 1 4 16.5v-9Z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="m4.6 8.1 6.72 4.95a1.15 1.15 0 0 0 1.36 0l6.72-4.95"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const WhatsAppIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M12 3.75a8.25 8.25 0 0 0-7.16 12.34L4 20.25l4.31-.79A8.25 8.25 0 1 0 12 3.75Z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9.3 8.95c.12-.31.24-.32.45-.33h.38c.12 0 .29.05.44.39.14.34.5 1.19.54 1.28.04.09.07.2 0 .31-.06.11-.1.18-.2.28-.1.1-.2.22-.29.29-.1.08-.2.17-.08.34.12.17.53.87 1.14 1.41.78.69 1.43.9 1.64 1 .2.1.32.08.43-.05.12-.13.51-.59.65-.8.14-.2.28-.16.47-.1.2.07 1.24.59 1.46.69.22.1.37.16.42.25.05.1.05.58-.14 1.14-.18.54-1.05 1-1.45 1.03-.39.03-.88.05-2.81-.7-2.31-.9-3.8-3.16-3.92-3.33-.11-.17-.94-1.25-.94-2.38 0-1.12.59-1.68.8-1.91Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const LocationIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M12 20.25s6-5.57 6-10.02A6 6 0 0 0 6 10.23c0 4.45 6 10.02 6 10.02Z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="10" r="2.1" stroke="currentColor" strokeWidth="1.6" />
+  </svg>
+);
+
 export default async function Home() {
   const cvText = await fetchCvSource();
   const header = extractHeader(cvText);
   const intro = extractSummaryIntro(cvText);
   const routes = extractRoutes(cvText);
   const profileImageUrl = extractProfileImageUrl(cvText);
+  const contacts = extractContacts(cvText);
 
   return (
     <main>
@@ -253,6 +456,57 @@ export default async function Home() {
           <h1>{header.fullName}</h1>
           <p className="homeHeroRole">{header.role}</p>
           <p>{intro}</p>
+
+          {(contacts.email || contacts.whatsapp || contacts.location) && (
+            <div className="homeContacts" aria-label="Contact links">
+              {contacts.email && (
+                <a
+                  href={contacts.email.href}
+                  className="homeContactButton"
+                  aria-label={`Send email to ${contacts.email.label}`}
+                >
+                  <MailIcon className="homeContactIcon" />
+                  <span>Email</span>
+                </a>
+              )}
+
+              {contacts.whatsapp && (
+                <a
+                  href={contacts.whatsapp.href}
+                  className="homeContactButton"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Send WhatsApp message"
+                >
+                  <WhatsAppIcon className="homeContactIcon" />
+                  <span>WhatsApp</span>
+                </a>
+              )}
+
+              {contacts.location && (
+                <div className="homeLocationBlock">
+                  <a
+                    href={contacts.location.href}
+                    className="homeContactButton homeContactButtonLocation"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open location: ${contacts.location.label}`}
+                  >
+                    <LocationIcon className="homeContactIcon" />
+                    {contacts.countryCode ? (
+                      <CountryFlagIcon
+                        className="homeLocationFlagImage"
+                        countryCode={contacts.countryCode}
+                      />
+                    ) : (
+                      <span className="homeLocationFlag" aria-hidden="true">{contacts.countryFlag}</span>
+                    )}
+                    <span>{contacts.location.label}</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {profileImageUrl && (
