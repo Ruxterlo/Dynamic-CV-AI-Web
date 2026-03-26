@@ -23,6 +23,9 @@ export default async function TechnologySkills() {
   // Función para asignar emoji según palabras clave
   const getEmoji = (text: string) => {
     const lower = text.toLowerCase();
+    if (lower.includes('virtualization')) return '👾';
+    if (lower.includes('artificial intelligence')) return '🤖';
+    if (lower.includes('sql')) return '🖥';
     if (lower.includes('python')) return '🐍';
     if (lower.includes('javascript') || lower.includes('typescript')) return '🟨';
     if (lower.includes('docker')) return '🐳';
@@ -30,6 +33,7 @@ export default async function TechnologySkills() {
     if (lower.includes('node')) return '🟩';
     if (lower.includes('aws')) return '☁️';
     if (lower.includes('git')) return '🔧';
+    if (lower.includes('business')) return '📊';
     if (lower.includes('certification') || lower.includes('certified')) return '📜';
     return '💻';
   };
