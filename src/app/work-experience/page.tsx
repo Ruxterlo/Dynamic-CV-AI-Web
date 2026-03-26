@@ -31,6 +31,7 @@ export default async function WorkExperience() {
   // 3️⃣ Normalizar líneas
   const lines = work
     .split('\n')
+    .map(line => line.replace(/([a-z])([A-Z])/g, '$1 $2'))
     .map(line => line.trim())
     .filter(line => line.length > 0);
 
@@ -71,7 +72,7 @@ export default async function WorkExperience() {
         <div
           style={{
             position: 'absolute',
-            left: '125px',
+            left: '165px',
             top: 0,
             bottom: 0,
             width: '2px',
@@ -89,8 +90,14 @@ export default async function WorkExperience() {
             }}
           >
             {/* Fecha */}
-            <div style={{ width: '100px', textAlign: 'right', paddingRight: '2rem', whiteSpace: 'nowrap',
- }}>
+            <div
+              style={{
+                width: '140px',
+                textAlign: 'right',
+                paddingRight: '2rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
               <strong>{job.date}</strong>
             </div>
 
@@ -102,10 +109,8 @@ export default async function WorkExperience() {
                 backgroundColor: '#333',
                 borderRadius: '50%',
                 marginTop: '6px',
-                marginRight: '1.5rem',
+                marginRight: '2.25rem',
                 zIndex: 1,
-				whiteSpace: 'nowrap',
-
               }}
             />
 
