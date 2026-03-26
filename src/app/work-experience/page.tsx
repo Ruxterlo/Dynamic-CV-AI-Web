@@ -92,7 +92,7 @@ export default async function WorkExperience() {
             {/* Fecha */}
             <div
               style={{
-                width: '140px',
+                width: '145px',
                 textAlign: 'right',
                 paddingRight: '2rem',
                 whiteSpace: 'nowrap',
