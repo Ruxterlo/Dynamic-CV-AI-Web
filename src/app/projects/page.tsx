@@ -1,47 +1,80 @@
 import { fetchCvSource } from '@/lib/cvSource';
-import { extractSection } from '@/lib/latexParser';
+import { extractRawSection } from '@/lib/latexParser';
+
+type ProjectItem = {
+  emoji: string;
+  html: string;
+};
+
+const extractProjectTitle = (latexLine: string): string => {
+  const titleMatch = latexLine.match(/\\textbf\s*\{\s*([^}]+)\s*\}/);
+  if (titleMatch?.[1]) {
+    return titleMatch[1].toLowerCase();
+  }
+  return '';
+};
+
+const getProjectEmoji = (latexLine: string): string => {
+  const title = extractProjectTitle(latexLine);
+  if (!title) return '📌';
+
+  if (title.includes('hr') || title.includes('performance')) return '👥';
+  if (title.includes('financial') || title.includes('forecast')) return '📈';
+  if (title.includes('facial') || title.includes('recognition')) return '🧑‍🤝‍🧑';
+  if (title.includes('recommendation')) return '⭐';
+  if (title.includes('chatbot')) return '🤖';
+  if (title.includes('data')) return '📊';
+  if (title.includes('travel')) return '✈️';
+  if (title.includes('collaboration') || title.includes('team')) return '🤝';
+  return '📌';
+};
+
+const latexToHtml = (text: string): string =>
+  text
+    .replace(/\\textbf\s*\{\s*(.+?)\s*\}/g, '<strong>$1</strong>')
+    .replace(/\\emph\s*\{\s*(.+?)\s*\}/g, '<em>$1</em>')
+    .replace(/\\&/g, '&')
+    .replace(/\s*-\s*-\s*/g, '<br />')
+    .replace(/\\\\/g, '<br />')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const extractProjectItems = (rawSection: string): ProjectItem[] => {
+  const cleaned = rawSection
+    .split('\n')
+    .filter(line => !line.trim().startsWith('%'))
+    .filter(line => !line.trim().startsWith('\\setlength'))
+    .filter(line => !line.trim().startsWith('\\vspace'))
+    .join('\n');
+
+  const itemRegex = /\\item\s+([\s\S]*?)(?=\\item\s+|\\end\{itemize\}|$)/g;
+  const rawItems = [...cleaned.matchAll(itemRegex)]
+    .map(match => match[1]?.trim() ?? '')
+    .filter(Boolean);
+
+  return rawItems
+    .map(item => ({
+      emoji: getProjectEmoji(item),
+      html: latexToHtml(item),
+    }))
+    .filter(item => item.html.length > 0);
+};
 
 export default async function Projects() {
   const cvText = await fetchCvSource();
 
-  const projectsText = extractSection(cvText, ['Recent Projects', 'Projects', 'Project Experience']);
+  const projectsRaw = extractRawSection(cvText, ['Recent Projects', 'Projects', 'Project Experience']);
 
-  if (projectsText === 'Section not found') {
+  if (!projectsRaw) {
     return (
       <main style={{ padding: '2rem' }}>
         <h1>Projects</h1>
-        <p>Projects section not found.</p>
+        <p>Section not found.</p>
       </main>
     );
   }
 
-  const projectItems = projectsText
-    .split('\n')
-    .map(item => item.trim())
-    .filter(item => item.length > 0);
-
-  // Función para asignar emoji basado en palabras clave dentro del título
-  const getEmoji = (text: string) => {
-    const titleMatch = text.match(/\\textbf\{(.+?)\}/);
-    if (!titleMatch) return '📌';
-    const title = titleMatch[1].toLowerCase();
-
-    if (title.includes('hr') || title.includes('performance')) return '👥';
-    if (title.includes('financial') || title.includes('forecast')) return '📈';
-    if (title.includes('facial') || title.includes('recognition')) return '🧑‍🤝‍🧑';
-    if (title.includes('recommendation')) return '⭐';
-    if (title.includes('chatbot')) return '🤖';
-    if (title.includes('data')) return '📊';
-    if (title.includes('travel')) return '✈️';
-    if (title.includes('collaboration') || title.includes('team')) return '🤝';
-    return '📌'; // default
-  };
-
-  // Convertir LaTeX \textbf{} en <strong> y limpiar caracteres
-  const latexToHtml = (text: string) =>
-    text
-      .replace(/\\textbf\{(.+?)\}/g, '<strong>$1</strong>')
-      .replace(/\\&/g, '&');
+  const projectItems = extractProjectItems(projectsRaw);
 
   return (
     <main style={{ padding: '2rem', maxWidth: '900px' }}>
@@ -60,10 +93,10 @@ export default async function Projects() {
               alignItems: 'flex-start',
             }}
           >
-            <span style={{ fontSize: '18px' }}>{getEmoji(item)}</span>
+            <span style={{ fontSize: '18px' }}>{item.emoji}</span>
             <span
               style={{ fontSize: '14px', lineHeight: '1.5' }}
-              dangerouslySetInnerHTML={{ __html: latexToHtml(item) }}
+              dangerouslySetInnerHTML={{ __html: item.html }}
             />
           </div>
         ))}
