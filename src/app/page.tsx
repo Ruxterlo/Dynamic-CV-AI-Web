@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { fetchCvSource } from '@/lib/cvSource';
 import { extractSection } from '@/lib/latexParser';
+import ProtectedImage from '@/components/ProtectedImage';
 
 const CV_SOURCE_URL = process.env.CV_SOURCE_URL?.trim() || '';
 
@@ -256,8 +257,11 @@ export default async function Home() {
 
         {profileImageUrl && (
           <div className="homeHeroMedia" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={profileImageUrl} alt={`${header.fullName} profile photo`} className="homeHeroImage" />
+            <ProtectedImage
+              src={profileImageUrl}
+              alt={`${header.fullName} profile photo`}
+              className="homeHeroImage"
+            />
           </div>
         )}
       </section>
