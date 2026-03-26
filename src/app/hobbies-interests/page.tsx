@@ -35,14 +35,21 @@ export default async function HobbiesInterests() {
 
   // Diccionario de iconos según palabras clave
   const iconMap: { keyword: RegExp; icon: string }[] = [
-    { keyword: /read|learning|book/i, icon: '📚' },
+    { keyword: /read|book/i, icon: '📚' },
+    { keyword: /lifelong learning/i, icon: '🧠' },
+    { keyword: /Working out/i, icon: '💪' },
+    { keyword: /cooking/i, icon: '👨‍🍳' },
+    { keyword: /teaching/i, icon: '👨‍🏫' },
     { keyword: /hiking|outdoor|swimming|adventure/i, icon: '🏔️' },
     { keyword: /travel/i, icon: '🌍' },
     { keyword: /tech|innovation/i, icon: '💻' },
     { keyword: /language/i, icon: '🗣️' },
     { keyword: /network/i, icon: '🤝' },
     { keyword: /invest/i, icon: '📈' },
-    { keyword: /volunteer|church|camp/i, icon: '❤️' },
+    { keyword: /music/i, icon: '🎼🎻' },
+    { keyword: /arts|theater/i, icon: '🎭' },
+    { keyword: /cinema|movie|film|tv series/i, icon: '🎬' },
+    { keyword: /volunteer|church|camp/i, icon: '🤲' },
   ];
 
   const getIcon = (text: string) => {
