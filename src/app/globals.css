@@ -76,12 +76,37 @@ a:hover {
 
 .homeHero {
 	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 240px;
+	column-gap: 1.2rem;
+	align-items: start;
 	margin-bottom: 1.1rem;
 	padding: 1.1rem 1.1rem 1rem;
 	border-radius: 14px;
 	border: 1px solid rgba(148, 163, 184, 0.24);
 	background: linear-gradient(160deg, rgba(241, 245, 249, 0.9), rgba(255, 255, 255, 0.95));
 	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.homeHeroText {
+	min-width: 0;
+}
+
+.homeHeroMedia {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	border-radius: 12px;
+	border: 1px solid rgba(148, 163, 184, 0.3);
+	background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+	overflow: hidden;
+	box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+}
+
+.homeHeroImage {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
 
 .homeHeroBadge {
@@ -247,6 +272,15 @@ a:hover {
 	main {
 		width: min(980px, 94vw);
 		margin-top: 3.8rem;
+	}
+
+	.homeHero {
+		grid-template-columns: 1fr;
+	}
+
+	.homeHeroMedia {
+		max-width: 220px;
+		margin-top: 0.6rem;
 	}
 
 	.chatInviteButton {

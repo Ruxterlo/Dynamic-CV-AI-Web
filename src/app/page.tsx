@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { fetchCvSource } from '@/lib/cvSource';
 import { extractSection } from '@/lib/latexParser';
 
+const CV_SOURCE_URL = process.env.CV_SOURCE_URL?.trim() || '';
+
 type RouteItem = {
   href: string;
   label: string;
@@ -93,6 +95,55 @@ const extractSummaryIntro = (cvText: string) => {
 
   const firstSentence = normalizedSummary.match(/^(.{60,220}?[.!?])(?:\s|$)/)?.[1]?.trim();
   return firstSentence || normalizedSummary.slice(0, 220).trim() || 'Select a section to explore my background, experience, and projects.';
+};
+
+const normalizeLatexAssetPath = (assetPath: string): string =>
+  assetPath
+    .replace(/\\%/g, '%')
+    .replace(/%/g, ' ')
+    .replace(/\\ /g, ' ')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const resolveCvAssetUrl = (assetPath: string): string | null => {
+  const cleanedPath = normalizeLatexAssetPath(assetPath);
+  if (!cleanedPath) {
+    return null;
+  }
+
+  const encodedPath = encodeURI(cleanedPath);
+
+  try {
+    return new URL(encodedPath).toString();
+  } catch {
+    if (!CV_SOURCE_URL) {
+      return null;
+    }
+
+    try {
+      return new URL(encodedPath, CV_SOURCE_URL).toString();
+    } catch {
+      return null;
+    }
+  }
+};
+
+const extractProfileImageUrl = (cvText: string): string | null => {
+  const includeGraphicsRegex = /^\s*%?\s*\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}/gm;
+  const matches = [...cvText.matchAll(includeGraphicsRegex)]
+    .map(match => match[1]?.trim())
+    .filter((value): value is string => !!value && value.length > 0);
+
+  if (matches.length === 0) {
+    return null;
+  }
+
+  const preferred =
+    matches.find(path => /photo|profile|avatar|headshot/i.test(path)) ??
+    matches[0];
+
+  return resolveCvAssetUrl(preferred);
 };
 
 const extractRoutes = (cvText: string): RouteItem[] => {
@@ -191,14 +242,24 @@ export default async function Home() {
   const header = extractHeader(cvText);
   const intro = extractSummaryIntro(cvText);
   const routes = extractRoutes(cvText);
+  const profileImageUrl = extractProfileImageUrl(cvText);
 
   return (
     <main>
       <section className="homeHero">
-        <p className="homeHeroBadge">Dynamic CV</p>
-        <h1>{header.fullName}</h1>
-        <p className="homeHeroRole">{header.role}</p>
-        <p>{intro}</p>
+        <div className="homeHeroText">
+          <p className="homeHeroBadge">Dynamic CV</p>
+          <h1>{header.fullName}</h1>
+          <p className="homeHeroRole">{header.role}</p>
+          <p>{intro}</p>
+        </div>
+
+        {profileImageUrl && (
+          <div className="homeHeroMedia" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={profileImageUrl} alt={`${header.fullName} profile photo`} className="homeHeroImage" />
+          </div>
+        )}
       </section>
 
       <ul className="homeGrid">
