@@ -77,14 +77,33 @@ export default async function ClientsCompanies() {
       .trim();
 
   const extractWebsite = (text: string) => {
+    const normalizeWebsiteUrl = (value: string) => {
+      const cleaned = value.trim();
+      if (!cleaned) {
+        return undefined;
+      }
+
+      if (/^https?:\/\//i.test(cleaned)) {
+        return cleaned;
+      }
+
+      if (/^www\./i.test(cleaned)) {
+        return `https://${cleaned}`;
+      }
+
+      return undefined;
+    };
+
     const hrefUrl = text.match(/\\href\{([^}]*)\}/)?.[1]?.trim();
-    if (hrefUrl) {
-      return hrefUrl;
+    const normalizedHref = hrefUrl ? normalizeWebsiteUrl(hrefUrl) : undefined;
+    if (normalizedHref) {
+      return normalizedHref;
     }
 
-    const inlineUrl = text.match(/https?:\/\/[^\s}]+/i)?.[0]?.trim();
-    if (inlineUrl) {
-      return inlineUrl;
+    const inlineUrl = text.match(/(?:https?:\/\/|www\.)[^\s}]+/i)?.[0]?.trim();
+    const normalizedInline = inlineUrl ? normalizeWebsiteUrl(inlineUrl) : undefined;
+    if (normalizedInline) {
+      return normalizedInline;
     }
 
     return undefined;
