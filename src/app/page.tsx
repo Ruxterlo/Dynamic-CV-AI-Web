@@ -50,7 +50,7 @@ const SECTION_ROUTE_MAP: Record<string, string> = {
   'Hobbies & Interests': '/hobbies-interests',
   'Hobbies and Interests': '/hobbies-interests',
   Interests: '/hobbies-interests',
-  'Clients & Companies': '/clients-companies',
+  'Clients & Partners': '/clients-companies',
   'Clients and Companies': '/clients-companies',
   Clients: '/clients-companies',
   Companies: '/clients-companies',
@@ -336,7 +336,7 @@ const extractRoutes = (cvText: string): RouteItem[] => {
     { href: '/languages', label: 'Languages' },
     { href: '/flexibility-mobility', label: 'Flexibility & Mobility' },
     { href: '/hobbies-interests', label: 'Hobbies & Interests' },
-    { href: '/clients-companies', label: 'Clients & Companies' },
+    { href: '/clients-companies', label: 'Clients & Partners' },
     { href: '/portfolio-profiles', label: 'Portfolio & Professional Profiles' },
   ];
 };

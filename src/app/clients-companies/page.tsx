@@ -148,7 +148,7 @@ export default async function ClientsCompanies() {
 
   return (
     <main style={{ padding: '2rem', maxWidth: '900px' }}>
-      <h1>Clients & Partners Portafolio</h1>
+      <h1>Clients & Partners</h1>
 
       <div
         style={{
