@@ -2,6 +2,7 @@ import { fetchCvSource } from '@/lib/cvSource';
 import Image from 'next/image';
 import { resolveCompanyLogo } from '@/lib/logoFetcher';
 import { extractRawSection } from '@/lib/latexParser';
+import CompanyLinkButton from '@/components/CompanyLinkButton';
 
 type CompanyEntry = {
   companyName: string;
@@ -16,12 +17,13 @@ export default async function ClientsCompanies() {
     'Clients and Companies',
     'Clients',
     'Companies',
+    'Clients & Partners',
   ]);
 
   if (!rawSection) {
     return (
       <main style={{ padding: '2rem' }}>
-        <h1>Clients & Companies</h1>
+        <h1>Clients & Partners Portafolio</h1>
         <p>Section not found.</p>
       </main>
     );
@@ -91,17 +93,24 @@ export default async function ClientsCompanies() {
   const extractCompanyName = (text: string) => {
     const plain = latexToPlainText(text);
 
-    const beforeColon = plain.split(':')[0]?.trim();
+    // Remove URLs from the plain text
+    const withoutUrls = plain
+      .replace(/https?:\/\/[^\s]+/gi, '')
+      .replace(/www\.[^\s]+/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const beforeColon = withoutUrls.split(':')[0]?.trim();
     if (beforeColon) {
       return beforeColon;
     }
 
-    const beforeDash = plain.split('-')[0]?.trim();
+    const beforeDash = withoutUrls.split('-')[0]?.trim();
     if (beforeDash) {
       return beforeDash;
     }
 
-    return plain;
+    return withoutUrls;
   };
 
   const toCompanyEntry = (block: string): CompanyEntry | null => {
@@ -139,7 +148,7 @@ export default async function ClientsCompanies() {
 
   return (
     <main style={{ padding: '2rem', maxWidth: '900px' }}>
-      <h1>Clients & Companies</h1>
+      <h1>Clients & Partners Portafolio</h1>
 
       <div
         style={{
@@ -236,6 +245,10 @@ export default async function ClientsCompanies() {
             )}
 
             <strong>{company.companyName}</strong>
+
+            {company.website && (
+              <CompanyLinkButton href={company.website} companyName={company.companyName} />
+            )}
           </div>
         ))}
       </div>
