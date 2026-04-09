@@ -1,0 +1,36 @@
+:root {
+	--story-ink-strong: #f8fafc;
+	--story-ink-soft: rgba(241, 245, 249, 0.92);
+	--story-ink-muted: rgba(203, 213, 225, 0.9);
+	--story-accent: #7dd3fc;
+	--story-accent-strong: #38bdf8;
+	--story-divider: rgba(148, 163, 184, 0.28);
+	--story-overlay-heavy: rgba(2, 6, 23, 0.74);
+	--story-overlay-soft: rgba(2, 6, 23, 0.58);
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+.parallax-bg {
+	position: fixed;
+	inset: 0;
+	z-index: -3;
+	pointer-events: none;
+	background-size: cover;
+	background-position: center;
+	will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	* {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

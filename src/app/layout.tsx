@@ -1,4 +1,5 @@
 import './globals.css';
+import '@/styles/narrative-global.css';
 import { ReactNode } from 'react';
 import ChatbaseBootstrap from '@/components/ChatbaseBootstrap';
 import GlobalHomeButton from '@/components/GlobalHomeButton';

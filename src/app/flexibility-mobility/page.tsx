@@ -95,9 +95,9 @@ export default async function FlexibilityMobility() {
 
   if (!mobilityRaw) {
     return (
-    <main style={{ padding: '2rem' }}>
+    <main className="sectionPageMain">
       <h1>Flexibility & Mobility</h1>
-      <p>Sección no encontrada en el CV.</p>
+      <p>Section not found in the CV.</p>
     </main>
     );
   }
@@ -105,18 +105,15 @@ export default async function FlexibilityMobility() {
   const mobilityItems = extractMobilityItems(mobilityRaw);
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Flexibility & Mobility</h1>
 
-      <div style={{ marginTop: '1.5rem' }}>
+      <div className="sectionPageStack">
         {mobilityItems.map((item, idx) => (
           <div
             key={idx}
+            className="sectionGlassCard"
             style={{
-              marginBottom: '1rem',
-              padding: '1rem',
-              borderRadius: '8px',
-              backgroundColor: '#f5f5f5',
               display: 'flex',
               gap: '0.75rem',
               alignItems: 'flex-start',

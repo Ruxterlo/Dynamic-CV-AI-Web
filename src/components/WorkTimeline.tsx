@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 
-export type EducationTimelineItem = {
+export type WorkTimelineItem = {
   date: string;
-  degree: string;
-  school: string;
+  role: string;
+  company: string;
   location: string;
-  keymodules: string[];
+  bullets: string[];
 };
 
-type EducationTimelineProps = {
-  items: EducationTimelineItem[];
+type WorkTimelineProps = {
+  items: WorkTimelineItem[];
   startYear?: number;
   endYear?: number;
 };
@@ -34,54 +34,29 @@ const getItemYearBounds = (date: string) => {
   return {
     startYear: Number.isFinite(startCandidate) ? startCandidate : NaN,
     endYear: Number.isFinite(endCandidate) ? endCandidate : NaN,
+    isPresent: /\bpresent\b/i.test(date),
   };
 };
 
-const getDegreePriority = (degree: string) => {
-  const normalized = degree.toLowerCase();
-
-  if (/\b(phd|doctor(?:ate)?)\b/i.test(normalized)) return 5;
-  if (/\b(msc|m\.sc|master(?:'s)?|mba|m\.eng|meng)\b/i.test(normalized)) return 4;
-  if (/\b(bsc|b\.sc|bachelor|ba)\b/i.test(normalized)) return 3;
-  if (/\b(diploma|associate)\b/i.test(normalized)) return 2;
-
-  return 1;
-};
-
-const isCompletedItem = (item: EducationTimelineItem) => {
-  if (/\bpresent\b/i.test(item.date)) {
-    return false;
-  }
-
-  const bounds = getItemYearBounds(item.date);
-  return Number.isFinite(bounds.endYear);
-};
-
-const getInitialActiveItemIndex = (items: EducationTimelineItem[]) => {
+const getInitialActiveItemIndex = (items: WorkTimelineItem[]) => {
   if (items.length === 0) {
     return 0;
   }
 
+  const currentYear = new Date().getFullYear();
   let bestIndex = 0;
-  let bestScore = -1;
   let bestEndYear = -Infinity;
   let bestStartYear = -Infinity;
 
   items.forEach((item, index) => {
     const bounds = getItemYearBounds(item.date);
     const startYear = Number.isFinite(bounds.startYear) ? bounds.startYear : -Infinity;
-    const endYear = Number.isFinite(bounds.endYear) ? bounds.endYear : startYear;
-    const completedScore = isCompletedItem(item) ? 1 : 0;
-    const degreeScore = getDegreePriority(item.degree);
-    const score = completedScore * 10 + degreeScore;
+    const endYear = bounds.isPresent
+      ? currentYear + 1
+      : (Number.isFinite(bounds.endYear) ? bounds.endYear : startYear);
 
-    if (
-      score > bestScore ||
-      (score === bestScore && endYear > bestEndYear) ||
-      (score === bestScore && endYear === bestEndYear && startYear >= bestStartYear)
-    ) {
+    if (endYear > bestEndYear || (endYear === bestEndYear && startYear >= bestStartYear)) {
       bestIndex = index;
-      bestScore = score;
       bestEndYear = endYear;
       bestStartYear = startYear;
     }
@@ -90,7 +65,7 @@ const getInitialActiveItemIndex = (items: EducationTimelineItem[]) => {
   return bestIndex;
 };
 
-export default function EducationTimeline({ items, startYear: timelineStartYear, endYear: timelineEndYear }: EducationTimelineProps) {
+export default function WorkTimeline({ items, startYear: timelineStartYear, endYear: timelineEndYear }: WorkTimelineProps) {
   const timelineItems = items ?? [];
   const [activeItemIndex, setActiveItemIndex] = useState(() => getInitialActiveItemIndex(timelineItems));
   const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -117,7 +92,7 @@ export default function EducationTimeline({ items, startYear: timelineStartYear,
   const itemRanges = timelineItems.map((item, index): ItemLayout => {
     const bounds = getItemYearBounds(item.date);
     const startCandidate = bounds.startYear;
-    const endCandidate = bounds.endYear;
+    const endCandidate = bounds.isPresent ? maxYear : bounds.endYear;
     const fallbackYear = minYear + (index / Math.max(timelineItems.length - 1, 1)) * totalYears;
     const rawStart = Number.isFinite(startCandidate) ? startCandidate : Math.round(fallbackYear);
     const rawEnd = Number.isFinite(endCandidate) ? endCandidate : rawStart;
@@ -350,7 +325,7 @@ export default function EducationTimeline({ items, startYear: timelineStartYear,
       <div
         className="educationTimelineNodes"
         role="tablist"
-        aria-label="Education timeline"
+        aria-label="Work experience timeline"
         style={{ minHeight: `${6.2 + Math.max(laneCount - 1, 0) * laneStepRem}rem` }}
       >
         {rangedLayouts.map(layout => {
@@ -365,13 +340,13 @@ export default function EducationTimeline({ items, startYear: timelineStartYear,
 
           return (
             <button
-              key={`range-${layout.itemIndex}-${item.date}-${item.degree}`}
+              key={`work-range-${layout.itemIndex}-${item.date}-${item.role}`}
               type="button"
               className={`educationTimelineNode${isActive ? ' is-active' : ''}`}
               style={nodeStyle}
               role="tab"
               aria-selected={isActive}
-              aria-label={`${item.date} ${item.degree}${item.school ? ` ${item.school}` : ''}`}
+              aria-label={`${item.date} ${item.role}${item.company ? ` ${item.company}` : ''}`}
               onClick={() => {
                 if (layout.itemIndex === safeActiveItemIndex) {
                   setIsPanelOpen(previous => !previous);
@@ -386,10 +361,8 @@ export default function EducationTimeline({ items, startYear: timelineStartYear,
               <span className="educationTimelineDot" aria-hidden="true" />
               <span className="educationTimelineConnector" aria-hidden="true" />
               <span className="educationTimelineNodeCaption">
-                <span className="educationTimelineNodeDate">
-                  {item.date}
-                </span>
-                <span className="educationTimelineNodeTitle">{item.degree}</span>
+                <span className="educationTimelineNodeDate">{item.date}</span>
+                <span className="educationTimelineNodeTitle">{item.role}</span>
               </span>
             </button>
           );
@@ -397,18 +370,18 @@ export default function EducationTimeline({ items, startYear: timelineStartYear,
       </div>
 
       {isPanelOpen && activeItem && (
-        <div className="educationTimelinePanel" role="tabpanel" aria-label="Selected education item details">
+        <div className="educationTimelinePanel" role="tabpanel" aria-label="Selected work experience details">
           <div className="educationTimelinePanelHeader">
             <div className="educationTimelinePanelDate">{activeItem.date}</div>
-            <div className="educationTimelinePanelTitle">{activeItem.degree}</div>
-            <div className="educationTimelinePanelSchool">{activeItem.school}</div>
+            <div className="educationTimelinePanelTitle">{activeItem.role}</div>
+            <div className="educationTimelinePanelSchool">{activeItem.company}</div>
             {activeItem.location && <div className="educationTimelinePanelLocation">{activeItem.location}</div>}
           </div>
 
-          {activeItem.keymodules.length > 0 && (
+          {activeItem.bullets.length > 0 && (
             <ul className="educationTimelineModuleList">
-              {activeItem.keymodules.map((line, index) => (
-                <li key={`${activeItem.degree}-module-${index}`} dangerouslySetInnerHTML={{ __html: line }} />
+              {activeItem.bullets.map((line, index) => (
+                <li key={`${activeItem.role}-bullet-${index}`} dangerouslySetInnerHTML={{ __html: line }} />
               ))}
             </ul>
           )}

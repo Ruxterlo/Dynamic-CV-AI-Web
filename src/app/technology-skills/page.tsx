@@ -8,7 +8,7 @@ export default async function TechnologySkills() {
 
   if (sectionText === 'Section not found') {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Technology Skills</h1>
         <p>Technology Skills section not found.</p>
       </main>
@@ -20,7 +20,7 @@ export default async function TechnologySkills() {
     .map(block => block.trim())
     .filter(block => block.length > 0);
 
-  // Función para asignar emoji según palabras clave
+  // Function to assign an emoji by keyword
   const getEmoji = (text: string) => {
     const lower = text.toLowerCase();
     if (lower.includes('virtualization')) return '👾';
@@ -38,24 +38,21 @@ export default async function TechnologySkills() {
     return '💻';
   };
 
-  // Convertir \textbf{} en <strong> y limpiar caracteres LaTeX
+  // Convert \textbf{} to <strong> and clean LaTeX characters
   const latexToHtml = (text: string) =>
     text
       .replace(/\\textbf\{(.+?)\}/g, '<strong>$1</strong>')
       .replace(/\\&/g, '&');
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Technology Skills</h1>
-      <div style={{ marginTop: '1.5rem' }}>
+      <div className="sectionPageStack">
         {blocks.map((block, idx) => (
           <div
             key={idx}
+            className="sectionGlassCard"
             style={{
-              marginBottom: '1rem',
-              padding: '1rem',
-              borderRadius: '8px',
-              backgroundColor: '#f5f5f5',
               display: 'flex',
               gap: '0.75rem',
               alignItems: 'flex-start',

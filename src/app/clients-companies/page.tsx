@@ -22,8 +22,8 @@ export default async function ClientsCompanies() {
 
   if (!rawSection) {
     return (
-      <main style={{ padding: '2rem' }}>
-        <h1>Clients & Partners Portafolio</h1>
+      <main className="sectionPageMain">
+        <h1>Clients & Partners</h1>
         <p>Section not found.</p>
       </main>
     );
@@ -31,7 +31,7 @@ export default async function ClientsCompanies() {
 
   let sectionText = rawSection;
 
-  // Limpiar comandos LaTeX básicos
+  // Clean basic LaTeX commands
   sectionText = sectionText
     .replace(/\\setlength\{.*?\}\{.*?\}/g, '')
     .replace(/\\\\/g, ' ')
@@ -39,7 +39,7 @@ export default async function ClientsCompanies() {
 
   const blocks: string[] = [];
 
-  // 1️⃣ Intentar extraer itemize
+  // 1️⃣ Try extracting itemize
   const itemizeRegex = /\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/;
   const itemizeMatch = sectionText.match(itemizeRegex);
 
@@ -54,7 +54,7 @@ export default async function ClientsCompanies() {
       blocks.push(item);
     }
   } else {
-    // 2️⃣ Si no hay itemize → dividir por comas
+    // 2️⃣ If there is no itemize -> split by commas
     const cleaned = sectionText
       .replace(/\\textbf\{(.+?)\}/g, '$1')
       .replace(/\\&/g, '&');
@@ -166,7 +166,7 @@ export default async function ClientsCompanies() {
   );
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Clients & Partners</h1>
 
       <div
@@ -180,11 +180,11 @@ export default async function ClientsCompanies() {
         {companies.map((company, idx) => (
           <div
             key={idx}
+            className="sectionGlassCard"
             style={{
               padding: '0.95rem 0.75rem',
-              borderRadius: '10px',
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #ececec',
+              background: 'rgba(224, 242, 254, 0.72)',
+              color: '#0f172a',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -206,7 +206,7 @@ export default async function ClientsCompanies() {
                   borderRadius: '12px',
                   overflow: 'hidden',
                   backgroundColor: '#ffffff',
-                  border: '1px solid #e2e2e2',
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -238,7 +238,7 @@ export default async function ClientsCompanies() {
                   borderRadius: '12px',
                   overflow: 'hidden',
                   backgroundColor: '#ffffff',
-                  border: '1px solid #e2e2e2',
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -263,7 +263,7 @@ export default async function ClientsCompanies() {
               </span>
             )}
 
-            <strong>{company.companyName}</strong>
+            <strong style={{ color: '#0f172a' }}>{company.companyName}</strong>
 
             {company.website && (
               <CompanyLinkButton href={company.website} companyName={company.companyName} />

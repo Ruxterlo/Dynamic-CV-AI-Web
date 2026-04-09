@@ -15,7 +15,7 @@ export default async function PortfolioProfiles() {
 
   if (!rawSection) {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Portfolio & Professional Profiles</h1>
         <p>Section not found.</p>
       </main>
@@ -24,7 +24,7 @@ export default async function PortfolioProfiles() {
 
   let sectionText = rawSection;
 
-  // Limpiar comandos LaTeX básicos
+  // Clean basic LaTeX commands
   sectionText = sectionText
     .replace(/\\setlength\{.*?\}\{.*?\}/g, '')
     .replace(/\\\\/g, ' ')
@@ -32,7 +32,7 @@ export default async function PortfolioProfiles() {
 
   const blocks: string[] = [];
 
-  // 1️⃣ Intentar extraer itemize
+  // 1️⃣ Try extracting itemize
   const itemizeRegex = /\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/;
   const itemizeMatch = sectionText.match(itemizeRegex);
 
@@ -47,7 +47,7 @@ export default async function PortfolioProfiles() {
       blocks.push(item);
     }
   } else {
-    // 2️⃣ Si no hay itemize → dividir por comas
+    // 2️⃣ If there is no itemize -> split by commas
     const cleaned = sectionText
       .replace(/\\textbf\{(.+?)\}/g, '$1')
       .replace(/\\&/g, '&');
@@ -58,7 +58,7 @@ export default async function PortfolioProfiles() {
     });
   }
 
-  // 🎨 Emojis inteligentes según tipo de perfil/plataforma
+  // 🎨 Smart emojis by profile/platform type
   const getEmoji = (text: string) => {
     const lower = text.toLowerCase();
 
@@ -72,7 +72,7 @@ export default async function PortfolioProfiles() {
     if (lower.includes('kaggle')) return '📊';
     if (lower.includes('youtube')) return '🎥';
 
-    return '🔗'; // default perfil
+    return '🔗'; // default profile
   };
 
   const extractUrl = (text: string) => {
@@ -148,7 +148,7 @@ export default async function PortfolioProfiles() {
     return { service: trimmed, address: normalizedShort };
   };
 
-  // Convertir LaTeX a HTML básico
+  // Convert LaTeX to basic HTML
   const latexToText = (text: string) => {
     const qrcodeRegex = /\\qrcode(?:\[[^\]]*\])?\{[^}]*\}/g;
 
@@ -172,10 +172,10 @@ export default async function PortfolioProfiles() {
   };
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Profiles & Portfolio</h1>
 
-      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div className="sectionPageStack">
         {blocks.map((block, idx) => (
           (() => {
             const textContent = latexToText(block);
@@ -198,10 +198,9 @@ export default async function PortfolioProfiles() {
             return (
           <div
             key={idx}
+            className="sectionGlassCard"
             style={{
               padding: '0.6rem 1rem',
-              borderRadius: '6px',
-              backgroundColor: '#f5f5f5',
               display: 'flex',
               gap: '0.6rem',
               alignItems: 'flex-start',

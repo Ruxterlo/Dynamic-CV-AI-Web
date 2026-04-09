@@ -67,7 +67,7 @@ export default async function Projects() {
 
   if (!projectsRaw) {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Projects</h1>
         <p>Section not found.</p>
       </main>
@@ -77,17 +77,14 @@ export default async function Projects() {
   const projectItems = extractProjectItems(projectsRaw);
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Projects</h1>
-      <div style={{ marginTop: '1.5rem' }}>
+      <div className="sectionPageStack">
         {projectItems.map((item, idx) => (
           <div
             key={idx}
+            className="sectionGlassCard"
             style={{
-              marginBottom: '1rem',
-              padding: '1rem',
-              borderRadius: '8px',
-              backgroundColor: '#f5f5f5',
               display: 'flex',
               gap: '0.75rem',
               alignItems: 'flex-start',

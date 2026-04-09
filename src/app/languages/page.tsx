@@ -2,7 +2,7 @@ import { fetchCvSource } from '@/lib/cvSource';
 import Image from 'next/image';
 import { extractRawSection } from '@/lib/latexParser';
 
-// Mapa de idioma → código de país en minúsculas
+// Language map -> lowercase country code
 const languageToCountryCode: Record<string, string> = {
   english: 'gb',
   spanish: 'es',
@@ -84,7 +84,7 @@ export default async function Languages() {
 
   if (!rawSection) {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Languages</h1>
         <p>Languages section not found.</p>
       </main>
@@ -98,7 +98,7 @@ export default async function Languages() {
 
   const blocks: string[] = [];
 
-  // Extraer items dentro de itemize
+  // Extract items inside itemize
   const itemizeRegex = /\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/;
   const itemizeMatch = sectionText.match(itemizeRegex);
   if (itemizeMatch) {
@@ -119,14 +119,14 @@ export default async function Languages() {
     }
   }
 
-  // Convertir \textbf{} a <strong>
+  // Convert \textbf{} to <strong>
   const latexToHtml = (text: string) =>
     text.replace(/\\textbf\{(.+?)\}/g, '<strong>$1</strong>').replace(/\\&/g, '&');
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px', fontFamily: 'sans-serif' }}>
+    <main className="sectionPageMain">
       <h1>Languages</h1>
-      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div className="sectionPageStack">
         {blocks.map((block, idx) => {
           const name = block.split(':')[0].trim().toLowerCase();
           const code = languageToCountryCode[name];
@@ -134,10 +134,9 @@ export default async function Languages() {
           return (
             <div
               key={idx}
+              className="sectionGlassCard"
               style={{
                 padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                backgroundColor: '#f5f5f5',
                 display: 'flex',
                 gap: '0.5rem',
                 alignItems: 'center',

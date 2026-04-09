@@ -4,7 +4,7 @@ import { extractSection } from '@/lib/latexParser';
 export default async function HobbiesInterests() {
   const cvText = await fetchCvSource();
 
-  // Extraer la sección
+  // Extract the section
   let hobbiesText = extractSection(cvText, [
     'Hobbies & Interests',
     'Hobbies and Interests',
@@ -13,27 +13,27 @@ export default async function HobbiesInterests() {
 
   if (hobbiesText === 'Section not found') {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Hobbies & Interests</h1>
         <p>Section not found.</p>
       </main>
     );
   }
 
-  // Limpiar saltos, espacios y comandos innecesarios
+  // Clean line breaks, spaces, and unnecessary commands
   hobbiesText = hobbiesText
     .replace(/\\\\/g, '')
     .replace(/\n/g, ' ')
-    .replace(/\\enddocument/g, '') // eliminar \end{document}
+    .replace(/\\enddocument/g, '') // remove \end{document}
     .trim();
 
-  // Separar hobbies por comas fuera de paréntesis
+  // Split hobbies by commas outside parentheses
   const hobbies = hobbiesText
-    .split(/,(?![^(]*\))/)  // comas fuera de paréntesis
+    .split(/,(?![^(]*\))/)  // commas outside parentheses
     .map(h => h.trim())
     .filter(h => h.length > 0);
 
-  // Diccionario de iconos según palabras clave
+  // Icon dictionary by keyword
   const iconMap: { keyword: RegExp; icon: string }[] = [
     { keyword: /read|book/i, icon: '📚' },
     { keyword: /lifelong learning/i, icon: '🧠' },
@@ -58,18 +58,15 @@ export default async function HobbiesInterests() {
   };
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Hobbies & Interests</h1>
 
-      <div style={{ marginTop: '1.5rem' }}>
+      <div className="sectionPageStack">
         {hobbies.map((hobby, idx) => (
           <div
             key={idx}
+            className="sectionGlassCard"
             style={{
-              marginBottom: '1rem',
-              padding: '1rem',
-              borderRadius: '8px',
-              backgroundColor: '#f5f5f5',
               display: 'flex',
               gap: '0.75rem',
               alignItems: 'flex-start'

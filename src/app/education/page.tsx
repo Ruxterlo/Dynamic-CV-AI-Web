@@ -12,34 +12,34 @@ type EducationBlock = {
 export default async function Education() {
   const cvText = await fetchCvSource();
 
-  // 1️⃣ Extraer sección
+  // 1️⃣ Extract section
   let education = extractSection(cvText, ['Education', 'Academic Background', 'Academic Formation']);
 
   if (education === 'Section not found') {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Education</h1>
         <p>Section not found.</p>
       </main>
     );
   }
 
-  // 2️⃣ Limpiar símbolos innecesarios (mantener saltos)
-  education = education.replace(/<(?!\/?strong).*?>/g, ''); // quitar tags excepto strong
-  education = education.replace(/\$/g, ''); // eliminar $
+  // 2️⃣ Clean unnecessary symbols (keep line breaks)
+  education = education.replace(/<(?!\/??strong).*?>/g, ''); // remove tags except strong
+  education = education.replace(/\$/g, ''); // remove $
 
-  // 3️⃣ Normalizar líneas
+  // 3️⃣ Normalize lines
   const lines = education
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.length > 0);
 
-  // 4️⃣ Construir bloques
+  // 4️⃣ Build blocks
   const educationBlocks: EducationBlock[] = [];
   let currentBlock: EducationBlock | null = null;
 
   lines.forEach(line => {
-    // 👉 Encabezado de educación
+    // 👉 Education header
     if (line.includes('|')) {
       const parts = line.split('|').map(p => p.trim());
 
@@ -55,27 +55,27 @@ export default async function Education() {
       return;
     }
 
-    // 👉 Línea descriptiva (Key Modules, etc.)
+    // 👉 Descriptive line (Key Modules, etc.)
     if (currentBlock) {
       currentBlock.keymodules.push(line);
     }
   });
 
-  // 5️⃣ Render timeline vertical (MISMA ESTRUCTURA QUE WORK)
+  // 5️⃣ Render vertical timeline (same structure as Work)
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Education</h1>
 
       <div style={{ position: 'relative', marginTop: '2rem' }}>
-        {/* Línea vertical */}
+        {/* Vertical line */}
         <div
+          className="sectionTimelineTrack"
           style={{
             position: 'absolute',
             left: '125px',
             top: 0,
             bottom: 0,
             width: '2px',
-            backgroundColor: '#333',
           }}
         />
 
@@ -88,7 +88,7 @@ export default async function Education() {
               position: 'relative',
             }}
           >
-            {/* Fecha */}
+            {/* Date */}
             <div
               style={{
                 width: '100px',
@@ -100,23 +100,23 @@ export default async function Education() {
               <strong>{edu.date}</strong>
             </div>
 
-            {/* Punto del timeline */}
+            {/* Timeline dot */}
             <div
+              className="sectionTimelineDot"
               style={{
                 width: '10px',
                 height: '10px',
-                backgroundColor: '#333',
                 borderRadius: '50%',
                 marginTop: '6px',
                 marginRight: '1.5rem',
                 zIndex: 1,
               }}
             />
-				{/* Contenido */}
-				<div style={{ flex: 1 }}>
+        {/* Content */}
+				<div className="sectionGlassCard" style={{ flex: 1 }}>
 				  <div style={{ fontWeight: 'bold' }}>{edu.degree}</div>
 				  <div>{edu.school}</div>
-				  <div style={{ fontStyle: 'italic', fontSize: '13px' }}>{edu.location}</div>
+				  <div className="sectionMutedText" style={{ fontStyle: 'italic', fontSize: '13px' }}>{edu.location}</div>
 
 				  {edu.keymodules.length > 0 && (
 					<ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
@@ -124,7 +124,7 @@ export default async function Education() {
 						<li
 						  key={i}
 						  style={{ marginBottom: '0.4rem' }}
-						  dangerouslySetInnerHTML={{ __html: desc }} // si desc tiene HTML
+              dangerouslySetInnerHTML={{ __html: desc }} // if desc contains HTML
 						/>
 					  ))}
 					</ul>

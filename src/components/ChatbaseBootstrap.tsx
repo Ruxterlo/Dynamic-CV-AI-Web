@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const CHATBOT_ID = process.env.NEXT_PUBLIC_CHATBASE_BOT_ID;
@@ -10,6 +11,8 @@ export default function ChatbaseBootstrap() {
   const [showHint, setShowHint] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [hintText, setHintText] = useState(DEFAULT_HINT_TEXT);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [chatAvatarUrl] = useState('/api/chat-avatar?v=chatbot-photo-v1');
 
   useEffect(() => {
     if (!CHATBOT_ID) {
@@ -79,12 +82,26 @@ export default function ChatbaseBootstrap() {
         onBlur={hideHint}
         aria-label={CHATBOT_ID ? 'Toggle chat to talk about my experience' : 'Chat is not configured'}
       >
-        <span className="chatInviteIcon" aria-hidden="true">
-          🤖
-        </span>
+        {!avatarFailed ? (
+          <Image
+            src={chatAvatarUrl}
+            alt=""
+            className="chatInviteAvatar"
+            aria-hidden="true"
+            onError={() => setAvatarFailed(true)}
+            loading="eager"
+            width={104}
+            height={104}
+            unoptimized
+          />
+        ) : (
+          <span className="chatInviteIcon" aria-hidden="true">
+            🤖
+          </span>
+        )}
       </button>
 
-      {CHATBOT_ID && (
+      {CHATBOT_ID && isOpen && (
         <div className={`chatIframePanel ${isOpen ? 'is-open' : ''}`}>
           <iframe
             src={`https://www.chatbase.co/chatbot-iframe/${CHATBOT_ID}`}

@@ -12,35 +12,35 @@ type WorkBlock = {
 export default async function WorkExperience() {
   const cvText = await fetchCvSource();
 
-  // 1️⃣ Extraer sección
+  // 1️⃣ Extract section
   let work = extractSection(cvText, ['Work Experience', 'Professional Experience', 'Experience']);
 
   if (work === 'Section not found') {
     return (
-      <main style={{ padding: '2rem' }}>
+      <main className="sectionPageMain">
         <h1>Work Experience</h1>
         <p>Section not found.</p>
       </main>
     );
   }
 
-  // 2️⃣ Limpiar símbolos innecesarios (NO eliminar saltos de línea)
-  work = work.replace(/<(\/?strong).*?>/g, ''); // eliminar tags excepto strong
-  work = work.replace(/\$/g, ''); // eliminar $
+  // 2️⃣ Clean unnecessary symbols (do not remove line breaks)
+  work = work.replace(/<(\/??strong).*?>/g, ''); // remove tags except strong
+  work = work.replace(/\$/g, ''); // remove $
 
-  // 3️⃣ Normalizar líneas
+  // 3️⃣ Normalize lines
   const lines = work
     .split('\n')
     .map(line => line.replace(/([a-z])([A-Z])/g, '$1 $2'))
     .map(line => line.trim())
     .filter(line => line.length > 0);
 
-  // 4️⃣ Construir bloques de experiencia
+  // 4️⃣ Build experience blocks
   const workBlocks: WorkBlock[] = [];
   let currentBlock: WorkBlock | null = null;
 
   lines.forEach(line => {
-    // 👉 Encabezado del trabajo
+    // 👉 Work header
     if (line.includes('|')) {
       const parts = line.split('|').map(p => p.trim());
 
@@ -56,27 +56,27 @@ export default async function WorkExperience() {
       return;
     }
 
-    // 👉 Cada línea posterior = UN bullet
+    // 👉 Each subsequent line = one bullet
     if (currentBlock) {
       currentBlock.bullets.push(line);
     }
   });
 
-  // 5️⃣ Render timeline vertical
+  // 5️⃣ Render vertical timeline
   return (
-    <main style={{ padding: '2rem', maxWidth: '900px' }}>
+    <main className="sectionPageMain">
       <h1>Work Experience</h1>
 
       <div style={{ position: 'relative', marginTop: '2rem' }}>
-        {/* Línea vertical */}
+        {/* Vertical line */}
         <div
+          className="sectionTimelineTrack"
           style={{
             position: 'absolute',
             left: '165px',
             top: 0,
             bottom: 0,
             width: '2px',
-            backgroundColor: '#333',
           }}
         />
 
@@ -89,7 +89,7 @@ export default async function WorkExperience() {
               position: 'relative',
             }}
           >
-            {/* Fecha */}
+            {/* Date */}
             <div
               style={{
                 width: '145px',
@@ -101,12 +101,12 @@ export default async function WorkExperience() {
               <strong>{job.date}</strong>
             </div>
 
-            {/* Punto del timeline */}
+            {/* Timeline dot */}
             <div
+              className="sectionTimelineDot"
               style={{
                 width: '10px',
                 height: '10px',
-                backgroundColor: '#333',
                 borderRadius: '50%',
                 marginTop: '6px',
                 marginRight: '2.25rem',
@@ -114,11 +114,11 @@ export default async function WorkExperience() {
               }}
             />
 
-            {/* Contenido */}
-            <div style={{ flex: 1 }}>
+            {/* Content */}
+			<div className="sectionGlassCard" style={{ flex: 1 }}>
               <div style={{ fontWeight: 'bold' }}>{job.role}</div>
               <div>{job.company}</div>
-              <div style={{ fontStyle: 'italic', fontSize: '13px' }}>
+              <div className="sectionMutedText" style={{ fontStyle: 'italic', fontSize: '13px' }}>
                 {job.location}
               </div>
 
