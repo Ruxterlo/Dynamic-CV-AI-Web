@@ -73,7 +73,7 @@ export default async function WorkExperience() {
           className="sectionTimelineTrack"
           style={{
             position: 'absolute',
-            left: '165px',
+            left: '180px',
             top: 0,
             bottom: 0,
             width: '2px',
@@ -94,7 +94,7 @@ export default async function WorkExperience() {
               style={{
                 width: '145px',
                 textAlign: 'right',
-                paddingRight: '2rem',
+                paddingRight: '10rem',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -109,7 +109,7 @@ export default async function WorkExperience() {
                 height: '10px',
                 borderRadius: '50%',
                 marginTop: '6px',
-                marginRight: '2.25rem',
+                marginRight: '1.5rem',
                 zIndex: 1,
               }}
             />

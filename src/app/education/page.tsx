@@ -72,7 +72,7 @@ export default async function Education() {
           className="sectionTimelineTrack"
           style={{
             position: 'absolute',
-            left: '125px',
+            left: '180px',
             top: 0,
             bottom: 0,
             width: '2px',
@@ -91,9 +91,9 @@ export default async function Education() {
             {/* Date */}
             <div
               style={{
-                width: '100px',
+                width: '145px',
                 textAlign: 'right',
-                paddingRight: '2rem',
+                paddingRight: '10rem',
                 whiteSpace: 'nowrap',
               }}
             >
