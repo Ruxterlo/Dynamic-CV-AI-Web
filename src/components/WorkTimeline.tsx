@@ -44,11 +44,22 @@ const getInitialActiveItemIndex = (items: WorkTimelineItem[]) => {
   }
 
   const currentYear = new Date().getFullYear();
-  let bestIndex = 0;
+
+  // Filter out items with "(Part-Time)" in the date
+  const isPartTime = (date: string) => /\(part-time\)/i.test(date);
+  const nonPartTimeIndices = items
+    .map((item, index) => (isPartTime(item.date) ? -1 : index))
+    .filter(index => index !== -1);
+
+  // Use non-part-time items if available, otherwise fall back to all items
+  const indicesToConsider = nonPartTimeIndices.length > 0 ? nonPartTimeIndices : items.map((_, i) => i);
+
+  let bestIndex = indicesToConsider[0] ?? 0;
   let bestEndYear = -Infinity;
   let bestStartYear = -Infinity;
 
-  items.forEach((item, index) => {
+  indicesToConsider.forEach(index => {
+    const item = items[index];
     const bounds = getItemYearBounds(item.date);
     const startYear = Number.isFinite(bounds.startYear) ? bounds.startYear : -Infinity;
     const endYear = bounds.isPresent

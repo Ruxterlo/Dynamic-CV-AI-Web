@@ -80,7 +80,12 @@ export default async function WorkExperience() {
           }}
         />
 
-        {workBlocks.map((job, idx) => (
+        {workBlocks.map((job, idx) => {
+          const partTimeMatch = job.date.match(/^(.*?)(\s*\(Part-Time\))$/i);
+          const mainDate = partTimeMatch ? partTimeMatch[1].trim() : job.date;
+          const partTimeLabel = partTimeMatch ? partTimeMatch[2].trim() : '';
+
+          return (
           <div
             key={idx}
             style={{
@@ -98,7 +103,12 @@ export default async function WorkExperience() {
                 whiteSpace: 'nowrap',
               }}
             >
-              <strong>{job.date}</strong>
+              <strong>{mainDate}</strong>
+              {partTimeLabel && (
+                <div style={{ fontSize: '12px', marginTop: '0.2rem', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                  {partTimeLabel}
+                </div>
+              )}
             </div>
 
             {/* Timeline dot */}
@@ -131,7 +141,8 @@ export default async function WorkExperience() {
               </ul>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </main>
   );
