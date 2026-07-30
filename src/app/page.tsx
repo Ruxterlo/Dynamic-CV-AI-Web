@@ -2,9 +2,12 @@ import Link from 'next/link';
 import { fetchCvSource } from '@/lib/cvSource';
 import { extractRawSection, extractSection } from '@/lib/latexParser';
 import ProtectedImage from '@/components/ProtectedImage';
+import JobCannonInsights from '@/components/JobCannonInsights';
 import StoryFlow, { PREVIEW_MAX_LINES } from '@/components/StoryFlow';
 import type { EducationTimelineItem } from '@/components/EducationTimeline';
 import type { WorkTimelineItem } from '@/components/WorkTimeline';
+
+export const dynamic = 'force-dynamic';
 
 type IconProps = {
   className?: string;
@@ -45,6 +48,25 @@ type StoryChapter = {
   workTimelineItems?: WorkTimelineItem[];
   workTimelineStartYear?: number;
   workTimelineEndYear?: number;
+};
+
+type PortfolioHighlight = {
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+type PortfolioProject = {
+  title: string;
+  description: string;
+  imageUrl: string;
+  tags: string[];
+};
+
+type BigFiveTrait = {
+  name: string;
+  score: number;
+  note: string;
 };
 
 const SECTION_ROUTE_MAP: Record<string, string> = {
@@ -404,7 +426,11 @@ const extractHeader = (cvText: string) => {
   ];
 
   const roleRaw = roleCandidates.find(candidate => !!candidate && candidate.trim().length > 0) ?? '';
-  const role = normalizeLatexText(roleRaw.replace(/\\textbf\{([^}]*)\}/g, '$1'));
+  const role = normalizeLatexText(roleRaw.replace(/\\textbf\{([^}]*)\}/g, '$1'))
+    .replace(/\$/g, '')
+    .replace(/\s*\|\s*/g, ' | ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   return {
     fullName: fullName || 'Professional CV',
@@ -1628,7 +1654,150 @@ const LocationIcon = ({ className }: IconProps) => (
   </svg>
 );
 
-export default async function Home() {
+const PORTFOLIO_HIGHLIGHTS: PortfolioHighlight[] = [
+  {
+    eyebrow: 'Identity',
+    title: 'Human & Technological Solutions Architect',
+    description:
+      'A profile built to translate operational complexity into technology that people can actually adopt.',
+  },
+  {
+    eyebrow: 'Value',
+    title: 'Systems Integration Specialist',
+    description:
+      'Connects business logic, workflows, data and teams so the system works as one coordinated whole.',
+  },
+  {
+    eyebrow: 'Delivery',
+    title: 'AI Solutions Engineer',
+    description:
+      'Focuses on practical AI applications: automation, dashboards, document intelligence and enablement.',
+  },
+];
+
+const FEATURED_PROJECTS: PortfolioProject[] = [
+  {
+    title: 'AI-assisted operations automation',
+    description:
+      'Workflow automation and intelligent assistants that reduce repetitive work and speed up decision-making.',
+    imageUrl:
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    tags: ['AI', 'Automation', 'Enablement'],
+  },
+  {
+    title: 'Business systems integration',
+    description:
+      'Multi-tool implementation work that aligns POS, ERP, databases and reporting inside real operations.',
+    imageUrl:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+    tags: ['Integration', 'ERP', 'Operations'],
+  },
+  {
+    title: 'Employer-facing CV portfolio',
+    description:
+      'A narrative web experience designed to help recruiters understand impact, personality and delivery style fast.',
+    imageUrl:
+      'https://images.unsplash.com/photo-1516321318423-6f8e9f33d0b4?auto=format&fit=crop&w=1200&q=80',
+    tags: ['Portfolio', 'Consulting', 'Brand'],
+  },
+];
+
+const BIG_FIVE_TRAITS: BigFiveTrait[] = [
+  {
+    name: 'Openness',
+    score: 93,
+    note: 'Curious, cross-functional and comfortable exploring new systems and ideas.',
+  },
+  {
+    name: 'Conscientiousness',
+    score: 88,
+    note: 'Structured, reliable and focused on execution, process quality and outcomes.',
+  },
+  {
+    name: 'Extraversion',
+    score: 74,
+    note: 'Strong consultative energy and communication across technical and business teams.',
+  },
+  {
+    name: 'Agreeableness',
+    score: 90,
+    note: 'Empathetic, service-oriented and attentive to user adoption and team alignment.',
+  },
+  {
+    name: 'Emotional Stability',
+    score: 84,
+    note: 'Calm under operational pressure and resilient during change or implementation gaps.',
+  },
+];
+
+const PortfolioCvMenu = ({ href, label }: { href: string; label: string }) => (
+  <details className="portfolioCvMenu">
+    <summary className="portfolioCvMenuSummary">Switch to CV</summary>
+    <div className="portfolioCvMenuPanel">
+      <a href={href} className="portfolioCvMenuLink portfolioCvMenuLinkPrimary">
+        {label}
+      </a>
+    </div>
+  </details>
+);
+
+const StoryPortfolioMenu = ({ href, label }: { href: string; label: string }) => (
+  <details className="portfolioCvMenu">
+    <summary className="portfolioCvMenuSummary">Switch to Portfolio</summary>
+    <div className="portfolioCvMenuPanel">
+      <a href={href} className="portfolioCvMenuLink portfolioCvMenuLinkPrimary">
+        {label}
+      </a>
+    </div>
+  </details>
+);
+
+const PortfolioProjectCard = ({ project }: { project: PortfolioProject }) => (
+  <article className="portfolioProjectCard">
+    <div className="portfolioProjectImageWrap">
+      <div
+        className="portfolioProjectImage"
+        style={{
+          backgroundImage: `linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.58)), url(${project.imageUrl})`,
+        }}
+      />
+    </div>
+    <div className="portfolioProjectBody">
+      <h3>{project.title}</h3>
+      <p>{project.description}</p>
+      <div className="portfolioTagRow">
+        {project.tags.map(tag => (
+          <span key={tag} className="portfolioTag">
+            {tag}
+          </span>
+        ))}
+      </div>
+    </div>
+  </article>
+);
+
+const PortfolioHighlightCard = ({ highlight }: { highlight: PortfolioHighlight }) => (
+  <article className="portfolioHighlightCard">
+    <p className="portfolioHighlightEyebrow">{highlight.eyebrow}</p>
+    <h3>{highlight.title}</h3>
+    <p>{highlight.description}</p>
+  </article>
+);
+
+const PortfolioTraitCard = ({ trait }: { trait: BigFiveTrait }) => (
+  <article className="portfolioTraitCard">
+    <div className="portfolioTraitHeader">
+      <h3>{trait.name}</h3>
+      <span>{trait.score}%</span>
+    </div>
+    <div className="portfolioTraitBar" aria-hidden="true">
+      <span style={{ width: `${trait.score}%` }} />
+    </div>
+    <p>{trait.note}</p>
+  </article>
+);
+
+export async function CvJourney() {
   const cvText = await fetchCvSource();
   const header = extractHeader(cvText);
   const intro = extractSummaryIntro(cvText);
@@ -1644,9 +1813,16 @@ export default async function Home() {
         <div className="storyGatewayOverlay" />
 
         <div className="storyGatewayContent">
+          <div className="storyTopBar">
+            <div>
+              <p className="homeHeroBadge">Interactive CV</p>
+            </div>
+
+            <StoryPortfolioMenu href="/portfolio-profiles" label="Open professional portfolio" />
+          </div>
+
           <div className="storyGatewayMain">
             <div className="storyGatewayCopy">
-              <p className="homeHeroBadge">Dynamic CV</p>
               <h1 className="storyDisplayHeading storyHeroName">{header.fullName}</h1>
               <p className="homeHeroRole">{header.role}</p>
               <p>{intro}</p>
@@ -1688,12 +1864,11 @@ export default async function Home() {
                       >
                         <LocationIcon className="homeContactIcon" />
                         {contacts.countryCode ? (
-                          <CountryFlagIcon
-                            className="homeLocationFlagImage"
-                            countryCode={contacts.countryCode}
-                          />
+                          <CountryFlagIcon className="homeLocationFlagImage" countryCode={contacts.countryCode} />
                         ) : (
-                          <span className="homeLocationFlag" aria-hidden="true">{contacts.countryFlag}</span>
+                          <span className="homeLocationFlag" aria-hidden="true">
+                            {contacts.countryFlag}
+                          </span>
                         )}
                         <span>{contacts.location.label}</span>
                       </a>
@@ -1705,7 +1880,7 @@ export default async function Home() {
               {firstChapterId && (
                 <div className="storyPrimaryCtaCenter">
                   <a href={`#${firstChapterId}`} className="storyPrimaryCta">
-                    Start Journey
+                    Start CV journey
                   </a>
                 </div>
               )}
@@ -1735,6 +1910,174 @@ export default async function Home() {
           ))}
         </section>
       </noscript>
+    </>
+  );
+}
+
+export default async function Home() {
+  const cvText = await fetchCvSource();
+  const header = extractHeader(cvText);
+  const intro = extractSummaryIntro(cvText);
+  const profileImageUrl = extractProfileImageUrl(cvText);
+  const contacts = extractContacts(cvText);
+
+  return (
+    <>
+      <section className="portfolioGateway" style={{ backgroundImage: `url(${INTRO_NEURAL_BACKGROUND})` }}>
+        <div className="storyGatewayOverlay portfolioGatewayOverlay" />
+
+        <div className="storyGatewayContent portfolioGatewayContent">
+          <div className="portfolioTopBar">
+            <div>
+              <p className="homeHeroBadge">Professional Portfolio</p>
+            </div>
+
+            <PortfolioCvMenu href="/cv" label="Open full CV page" />
+          </div>
+
+          <div className="portfolioHeroGrid">
+            <div className="portfolioHeroCopy">
+              <h1 className="storyDisplayHeading portfolioHeroTitle">{header.fullName}</h1>
+              <p className="homeHeroRole">{header.role}</p>
+              <p className="portfolioHeroIntro">{intro}</p>
+
+              <div className="portfolioActionRow">
+                <a href="#portfolio-personality" className="storyPrimaryCta">
+                  Discover my profile
+                </a>
+              </div>
+
+              {(contacts.email || contacts.whatsapp || contacts.location) && (
+                <div className="homeContacts" aria-label="Contact links">
+                  {contacts.email && (
+                    <a
+                      href={contacts.email.href}
+                      className="homeContactButton"
+                      aria-label={`Send email to ${contacts.email.label}`}
+                    >
+                      <MailIcon className="homeContactIcon" />
+                      <span>Email</span>
+                    </a>
+                  )}
+
+                  {contacts.whatsapp && (
+                    <a
+                      href={contacts.whatsapp.href}
+                      className="homeContactButton"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Send WhatsApp message"
+                    >
+                      <WhatsAppIcon className="homeContactIcon" />
+                      <span>WhatsApp</span>
+                    </a>
+                  )}
+
+                  {contacts.location && (
+                    <div className="homeLocationBlock">
+                      <a
+                        href={contacts.location.href}
+                        className="homeContactButton homeContactButtonLocation"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open location: ${contacts.location.label}`}
+                      >
+                        <LocationIcon className="homeContactIcon" />
+                        {contacts.countryCode ? (
+                          <CountryFlagIcon className="homeLocationFlagImage" countryCode={contacts.countryCode} />
+                        ) : (
+                          <span className="homeLocationFlag" aria-hidden="true">
+                            {contacts.countryFlag}
+                          </span>
+                        )}
+                        <span>{contacts.location.label}</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="portfolioHeroVisual">
+              {profileImageUrl && (
+                <div className="portfolioHeroPortraitWrap">
+                  <ProtectedImage
+                    src={profileImageUrl}
+                    alt={`${header.fullName} profile photo`}
+                    className="homeHeroImage"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <JobCannonInsights />
+
+      <section className="portfolioSection" id="portfolio-personality">
+        <div className="portfolioSectionHeadingBlock">
+          <p className="portfolioSectionEyebrow">Profile</p>
+          <h2>What stands out from the document</h2>
+        </div>
+
+        <div className="portfolioHighlightGrid">
+          {PORTFOLIO_HIGHLIGHTS.map(highlight => (
+            <PortfolioHighlightCard key={highlight.title} highlight={highlight} />
+          ))}
+        </div>
+      </section>
+
+      <section className="portfolioSection" id="portfolio-traits">
+        <div className="portfolioSectionHeadingBlock">
+          <p className="portfolioSectionEyebrow">Qualities</p>
+          <h2>Consultative traits that employers can read fast</h2>
+        </div>
+
+        <div className="portfolioTraitGrid">
+          {BIG_FIVE_TRAITS.map(trait => (
+            <PortfolioTraitCard key={trait.name} trait={trait} />
+          ))}
+        </div>
+      </section>
+
+      <section className="portfolioSection" id="portfolio-projects">
+        <div className="portfolioSectionHeadingBlock">
+          <p className="portfolioSectionEyebrow">Projects</p>
+          <h2>Featured work and visual proof</h2>
+        </div>
+
+        <div className="portfolioProjectGrid">
+          {FEATURED_PROJECTS.map(project => (
+            <PortfolioProjectCard key={project.title} project={project} />
+          ))}
+        </div>
+      </section>
+
+      <section className="portfolioSection portfolioCvAccessSection" id="cv-preview">
+        <div className="portfolioSectionHeadingBlock">
+          <p className="portfolioSectionEyebrow">CV access</p>
+          <h2>Discover more about my professional trajectory</h2>
+        </div>
+
+        <a
+          href="/cv"
+          className="portfolioCvAccessBar"
+          aria-label="Discover more about my professional trajectory"
+        >
+          <span className="portfolioCvAccessBarLabel">View my CV here . . . </span>
+          <span className="portfolioCvAccessBarHint">Portfolio to CV</span>
+          <span className="portfolioCvAccessArrow" aria-hidden="true">
+            ↗
+          </span>
+        </a>
+
+        <p className="portfolioCvAccessFooter" aria-label="Copyright and powered by AI note">
+           
+           
+           &copy; 2026 R. Lopez · Powered by AI
+        </p>
+      </section>
     </>
   );
 }
