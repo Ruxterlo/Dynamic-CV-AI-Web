@@ -1997,8 +1997,6 @@ export default async function Home() {
                 </div>
               )}
             </div>
-
-            <div className="portfolioHeroVisual">
               {profileImageUrl && (
                 <div className="portfolioHeroPortraitWrap">
                   <ProtectedImage
@@ -2010,7 +2008,6 @@ export default async function Home() {
               )}
             </div>
           </div>
-        </div>
       </section>
 
       <JobCannonInsights />

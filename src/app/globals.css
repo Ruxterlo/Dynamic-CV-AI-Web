@@ -947,15 +947,11 @@ a:hover {
 }
 
 .portfolioTopBar {
-	position: absolute;
-	top: -2rem;
-	left: 0;
-	right: 0;
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
-	margin-bottom: 0;
+	margin-bottom: 1.15rem;
 }
 
 .storyTopBar {
@@ -994,7 +990,7 @@ a:hover {
 }
 
 .portfolioCvMenuSummary::-webkit-details-marker {
-	display: none;
+	display: flex;
 }
 
 .portfolioCvMenuSummary::after {
@@ -1994,7 +1990,11 @@ a:hover {
 	}
 
 	.portfolioTopBar {
-		flex-direction: column;
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1.15rem;
 	}
 
 	.portfolioCvMenuPanel {
