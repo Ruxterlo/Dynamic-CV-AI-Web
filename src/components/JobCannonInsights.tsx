@@ -1,4 +1,8 @@
 import { loadJobCannonReport } from '@/lib/jobcannon';
+import EnneagramModal from './EnneagramModal';
+import ChartModal from './ChartModal';
+import HeaderChartTrigger from './HeaderChartTrigger';
+import JobCannonSectionToggle from './JobCannonSectionToggle';
 
 const MULTIPLE_INTELLIGENCE_LABELS: Record<string, string> = {
 	bodily: 'Bodily',
@@ -78,9 +82,6 @@ const BarChart = ({
 	highlight?: string;
 }) => (
 	<div className="jobCannonChartCard">
-		<div className="jobCannonChartHeader">
-			<p>{title}</p>
-		</div>
 		<div className="jobCannonBars">
 			{entries.map(([key, value]) => {
 				const label = labelMap[key] ?? key;
@@ -107,9 +108,6 @@ const SpectrumChart = ({ entries }: { entries: Array<[string, number]> }) => {
 
 	return (
 		<div className="jobCannonChartCard">
-			<div className="jobCannonChartHeader">
-				<p>Preference spectrum</p>
-			</div>
 			<div className="jobCannonSpectrumList">
 				{entries.map(([key, value]) => {
 					const halfWidth = normalizeScore(Math.abs(value), maxAbs);
@@ -156,9 +154,6 @@ const RadarChart = ({ entries }: { entries: Array<[string, number]> }) => {
 
 	return (
 		<div className="jobCannonChartCard">
-			<div className="jobCannonChartHeader">
-				<p>Radar view</p>
-			</div>
 			<svg className="jobCannonRadar" viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Radar chart">
 				{levels.map(level => (
 					<polygon key={level} points={pointsFor(level)} className="jobCannonRadarRing" />
@@ -221,131 +216,63 @@ const buildStudyEntries = (study: Awaited<ReturnType<typeof loadJobCannonReport>
 const buildEnneagramEntries = (study: Awaited<ReturnType<typeof loadJobCannonReport>>['studies'][number]) =>
 	ENNEAGRAM_TYPES.map(type => [type, study.scores[type] ?? 0] as [string, number]);
 
-const EnneagramCombinedChart = ({
-	study,
-}: {
-	study: Awaited<ReturnType<typeof loadJobCannonReport>>['studies'][number];
-}) => {
-	const entries = buildEnneagramEntries(study);
-	const size = 240;
-	const center = size / 2;
-	const radius = 80;
-	const levels = [0.3, 0.55, 0.8, 1];
-	const maxValue = Math.max(...entries.map(([, value]) => value), 1);
-	const pointsFor = (ratio: number) =>
-		entries
-			.map(([, value], index) => {
-				const angle = -Math.PI / 2 + (index / entries.length) * Math.PI * 2;
-				const scaled = radius * ratio * (value / maxValue);
-				const x = center + Math.cos(angle) * scaled;
-				const y = center + Math.sin(angle) * scaled;
-				return `${x.toFixed(2)},${y.toFixed(2)}`;
-			})
-			.join(' ');
+/* EnneagramCombinedChart removed — replaced by EnneagramModal (modal-based radar) */
 
-	return (
-		<details className="jobCannonChartCard jobCannonEnneagramDisclosure">
-			<summary className="jobCannonEnneagramSummary">
-				<div className="jobCannonChartHeader jobCannonEnneagramHeader">
-					<div>
-						<p>Enneagram combined view</p>
-						<span>Hover or click to reveal the score breakdown</span>
-					</div>
-					<span className="jobCannonEnneagramToggleHint" aria-hidden="true">
-						↕
-					</span>
-				</div>
-
-				<svg
-					className="jobCannonRadar jobCannonEnneagramRadar"
-					viewBox={`0 0 ${size} ${size}`}
-					role="img"
-					aria-label="Enneagram radar chart"
-				>
-					{levels.map(level => (
-						<polygon key={level} points={pointsFor(level)} className="jobCannonRadarRing" />
-					))}
-					{entries.map(([, value], index) => {
-						const angle = -Math.PI / 2 + (index / entries.length) * Math.PI * 2;
-						const x = center + Math.cos(angle) * radius;
-						const y = center + Math.sin(angle) * radius;
-						const labelX = center + Math.cos(angle) * (radius + 20);
-						const labelY = center + Math.sin(angle) * (radius + 20);
-
-						return (
-							<g key={`${index}-${value}`}>
-								<line x1={center} y1={center} x2={x} y2={y} className="jobCannonRadarAxis" />
-								<text x={labelX} y={labelY} className="jobCannonRadarLabel" textAnchor="middle" dominantBaseline="middle">
-									{entries[index]?.[0]}
-								</text>
-							</g>
-						);
-					})}
-					<polygon points={pointsFor(1)} className="jobCannonRadarValue" />
-					{entries.map(([, value], index) => {
-						const angle = -Math.PI / 2 + (index / entries.length) * Math.PI * 2;
-						const x = center + Math.cos(angle) * radius * (value / maxValue);
-						const y = center + Math.sin(angle) * radius * (value / maxValue);
-						return <circle key={`${index}-${value}-dot`} cx={x} cy={y} r="3.6" className="jobCannonRadarDot" />;
-					})}
-				</svg>
-			</summary>
-
-			<div className="jobCannonEnneagramBarsPanel">
-				<div className="jobCannonChartHeader">
-					<p>Score breakdown</p>
-				</div>
-				<div className="jobCannonBars">
-					{entries.map(([key, value]) => {
-						const width = normalizeScore(value, 100);
-						const label = ENNEAGRAM_LABELS[key] ?? `Type ${key}`;
-
-						return (
-							<div key={key} className={`jobCannonBarRow${study.topResult === key ? ' is-highlighted' : ''}`}>
-								<div className="jobCannonBarMeta">
-									<span>{label}</span>
-									<strong>{Math.round(value)}</strong>
-								</div>
-								<div className="jobCannonBarTrack" aria-hidden="true">
-									<span style={{ width: `${width}%` }} />
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			</div>
-		</details>
-	);
-};
-
-const renderStudyChart = (study: Awaited<ReturnType<typeof loadJobCannonReport>>['studies'][number]) => {
+const renderStudyChart = (
+	study: Awaited<ReturnType<typeof loadJobCannonReport>>['studies'][number],
+	triggerId?: string,
+) => {
 	const entries = buildStudyEntries(study);
 
 	if (study.slug === 'multiple-intelligences') {
-		return <BarChart title="Multiple intelligence profile" entries={entries} labelMap={MULTIPLE_INTELLIGENCE_LABELS} maxValue={100} highlight={study.topResult} />;
+		return (
+			<ChartModal title="Multiple intelligence profile" previewLabel="Open multiple intelligences" triggerId={triggerId}>
+				<BarChart title="Multiple intelligence profile" entries={entries} labelMap={MULTIPLE_INTELLIGENCE_LABELS} maxValue={100} highlight={study.topResult} />
+			</ChartModal>
+		);
 	}
 
 	if (study.slug === 'leadership-style') {
-		return <BarChart title="Leadership style mix" entries={entries} labelMap={LEADERSHIP_LABELS} maxValue={100} highlight={study.topResult} />;
+		return (
+			<ChartModal title="Leadership style mix" previewLabel="Open leadership chart" triggerId={triggerId}>
+				<BarChart title="Leadership style mix" entries={entries} labelMap={LEADERSHIP_LABELS} maxValue={100} highlight={study.topResult} />
+			</ChartModal>
+		);
 	}
 
 	if (study.slug === 'enneagram') {
-		return <EnneagramCombinedChart study={study} />;
+		return <EnneagramModal study={study} triggerId={triggerId} />;
 	}
 
 	if (study.slug === 'mbti-type-indicator') {
-		return <SpectrumChart entries={entries} />;
+		return (
+			<ChartModal title="MBTI spectrum" previewLabel="Open MBTI spectrum" triggerId={triggerId}>
+				<SpectrumChart entries={entries} />
+			</ChartModal>
+		);
 	}
 
 	if (study.slug === 'eq-emotional-intelligence') {
-		return <BarChart title="Emotional intelligence dimensions" entries={entries} labelMap={EQ_LABELS} maxValue={100} highlight={study.topResult} />;
+		return (
+			<ChartModal title="Emotional intelligence dimensions" previewLabel="Open EQ chart" triggerId={triggerId}>
+				<BarChart title="Emotional intelligence dimensions" entries={entries} labelMap={EQ_LABELS} maxValue={100} highlight={study.topResult} />
+			</ChartModal>
+		);
 	}
 
 	if (study.slug === 'disc') {
-		return <BarChart title="DISC balance" entries={entries} labelMap={DISC_LABELS} maxValue={100} highlight={study.topResult} />;
+		return (
+			<ChartModal title="DISC balance" previewLabel="Open DISC chart" triggerId={triggerId}>
+				<BarChart title="DISC balance" entries={entries} labelMap={DISC_LABELS} maxValue={100} highlight={study.topResult} />
+			</ChartModal>
+		);
 	}
 
-	return <RadarChart entries={entries.map(([key, value]) => [BIG_FIVE_LABELS[key] ?? key, value])} />;
+	return (
+		<ChartModal title="Personality radar" previewLabel="Open personality radar" triggerId={triggerId}>
+			<RadarChart entries={entries.map(([key, value]) => [BIG_FIVE_LABELS[key] ?? key, value])} />
+		</ChartModal>
+	);
 };
 
 export default async function JobCannonInsights() {
@@ -360,15 +287,18 @@ export default async function JobCannonInsights() {
 		<section className="jobCannonSection" id="jobcannon-insights">
 			<div className="portfolioSectionHeadingBlock">
 				<p className="portfolioSectionEyebrow">JobCannon intelligence</p>
-				<h2>Assessment insights powered by the latest results file</h2>
+				<h2>Assessment insights</h2>
 			</div>
 
-			<p className="jobCannonIntro">
-				This section is read directly from the local markdown file on the server, so any update to the file is reflected here the next time the page is rendered.
+			<p className="jobCannonSourceNote">
+				This section shows assessment summaries and interactive visual profiles for each test (personality radars, leadership styles, MBTI, DISC, multiple intelligences, and related metrics).
 			</p>
 
 			<div className="jobCannonSummaryGrid">
-				<div className="jobCannonSummarySpacer">Test Results Export</div>
+				<div className="jobCannonSummarySpacer" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+					<span>Test Results Export</span>
+					<JobCannonSectionToggle targetId="jobcannon-insights-body" defaultExpanded={false} />
+				</div>
 				<div className="jobCannonSummaryCard jobCannonSummaryCardStudies">
 					<span>Studies</span>
 					<strong>{report.totalTests || studies.length}</strong>
@@ -379,13 +309,19 @@ export default async function JobCannonInsights() {
 				</div>
 			</div>
 
-			<div className="jobCannonStudyStack">
+			<p className="jobCannonIntroSmall">Click the arrow to expand and view detailed test results and AI-generated insights.</p>
+
+			<div id="jobcannon-insights-body" style={{ display: 'none' }}>
+				<div className="jobCannonStudyStack">
 				{studies.map(study => (
 					<article key={study.slug} className="jobCannonStudy" id={`jobcannon-${study.slug}`}>
 						<div className="jobCannonStudyHeader">
 							<div>
 								<p className="jobCannonStudyEyebrow">{study.completed || 'Assessment result'}</p>
-								<h3>{study.title}</h3>
+								<h3 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+									{study.title}
+									<HeaderChartTrigger slug={study.slug} title={study.title} />
+								</h3>
 							</div>
 							<div className="jobCannonStudyMeta">
 								<span>{study.questionsAnswered}/{study.totalQuestions} answered</span>
@@ -394,11 +330,12 @@ export default async function JobCannonInsights() {
 						</div>
 
 						<div className="jobCannonStudyBody">
-							{renderStudyChart(study)}
+							{renderStudyChart(study, `chart-trigger-${study.slug}`)}
 							<StudyInsight {...study.insight} />
 						</div>
 					</article>
 				))}
+				</div>
 			</div>
 		</section>
 	);
