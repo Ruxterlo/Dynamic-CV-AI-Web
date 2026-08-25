@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import fs from 'fs';
+import path from 'path';
 import { fetchCvSource } from '@/lib/cvSource';
 import { extractRawSection, extractSection } from '@/lib/latexParser';
 import ProtectedImage from '@/components/ProtectedImage';
@@ -1381,6 +1383,163 @@ const buildProjectsPreview = (content: string): string[] => {
   return previewLines.length > 0 ? previewLines : extractPreviewSentences(content, PREVIEW_MAX_LINES);
 };
 
+const parseProjectsFromLatex = (content: string): PortfolioProject[] => {
+  const itemizeRegex = /\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/;
+  const itemizeMatch = content.match(itemizeRegex);
+
+  let projectEntries: string[] = [];
+
+  if (itemizeMatch) {
+    const itemsText = itemizeMatch[1];
+    const itemRegex = /\\item\s+([\s\S]*?)(?=(\\item|$))/g;
+    projectEntries = [...itemsText.matchAll(itemRegex)].map(m => m[1].trim()).filter(Boolean);
+  } else {
+    const normalized = content.replace(/\r/g, '').trim();
+    const byLines = normalized.split('\n').map(l => l.trim()).filter(Boolean);
+    if (byLines.length > 1) projectEntries = byLines;
+  }
+
+  const projects: PortfolioProject[] = projectEntries.map(raw => {
+    // find bold title
+    let title = '';
+    let description = raw;
+
+    const boldMatch = raw.match(/\\textbf\s*\{\s*([^}]+)\s*\}/) || raw.match(/<strong>(.*?)<\/strong>/i);
+    if (boldMatch) {
+      title = boldMatch[1] ?? boldMatch[0];
+      description = raw.replace(boldMatch[0], '').replace(/[{}]/g, ' ').trim();
+    } else {
+      // split on dash or — or ':'
+      const split = raw.split(/[-–—:]/);
+      if (split.length >= 2) {
+        title = split[0].trim();
+        description = split.slice(1).join(':').trim();
+      } else {
+        // fallback: first 6 words as title
+        const words = raw.replace(/\\\S+\{[^}]*\}/g, '').split(/\s+/).filter(Boolean);
+        title = words.slice(0, 6).join(' ');
+        description = raw;
+      }
+    }
+
+    // image detection: includegraphics or http image URL
+    let imageUrl: string | undefined;
+    const includeMatch = raw.match(/\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}/i);
+    if (includeMatch) {
+      imageUrl = includeMatch[1];
+    } else {
+      const urlMatch = raw.match(/https?:\/\/[^\s)"']+\.(?:png|jpe?g|webp)/i);
+      if (urlMatch) imageUrl = urlMatch[0];
+    }
+
+    // tags extraction: look for bracketed or parenthesized lists near the end, or #hashtags
+    const tags: string[] = [];
+    const bracketMatch = raw.match(/\[([^\]]+)\]/);
+    const parenEndMatch = raw.match(/\(([^)]+)\)\s*$/);
+    const parenAnyMatch = raw.match(/\(([^)]+)\)/);
+    const hashTags = [...raw.matchAll(/#([A-Za-z0-9_-]+)/g)].map(m => m[1]);
+
+    const tagsSource = (bracketMatch && bracketMatch[1]) || (parenEndMatch && parenEndMatch[1]) || (parenAnyMatch && parenAnyMatch[1]) || '';
+    if (tagsSource) {
+      tags.push(...tagsSource.split(/[,;]+/).map(t => t.trim()).filter(Boolean));
+    }
+    if (hashTags.length > 0) {
+      tags.push(...hashTags);
+    }
+
+    // resolve local project image matches inside project-pictures folders
+    try {
+      const publicImagesDir = path.join(process.cwd(), 'public', 'project-pictures');
+      const rootImagesDir = path.join(process.cwd(), 'Projects Pictures');
+
+      const candidates: { dir: string; files: string[] }[] = [];
+      if (fs.existsSync(publicImagesDir)) {
+        candidates.push({ dir: publicImagesDir, files: fs.readdirSync(publicImagesDir) });
+      }
+      if (fs.existsSync(rootImagesDir)) {
+        candidates.push({ dir: rootImagesDir, files: fs.readdirSync(rootImagesDir) });
+      }
+
+      if (!imageUrl && candidates.length > 0) {
+        const sanitize = (s: string) =>
+          s
+            .replace(/\\&/g, '&')
+            .replace(/[#*_`~<>\[\]\(\)\{\}]/g, ' ')
+            .replace(/[\/\\]/g, ' ')
+            .replace(/[^a-z0-9\s]/gi, ' ')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        const normTitle = sanitize(title);
+        const titleWords = normTitle.split(/\s+/).filter(Boolean).filter(w => w.length > 1);
+
+        let best: { file: string; dir: string; score: number } | null = null;
+
+        for (const { dir, files } of candidates) {
+          for (const f of files) {
+            const nameLower = f.toLowerCase();
+            const nameNoExt = nameLower.replace(/\.[^.]+$/, '');
+            const nameNormalized = nameNoExt.replace(/[^a-z0-9]+/g, ' ');
+            const matches = titleWords.filter(w => nameNormalized.includes(w));
+            const score = matches.length;
+            if (score > 0) {
+              if (!best || score > best.score || (score === best.score && best.dir !== publicImagesDir && dir === publicImagesDir)) {
+                best = { file: f, dir, score };
+              }
+            }
+          }
+        }
+
+        // fallback: try prefix slug match against public images
+        if (!best && candidates.some(c => c.dir === publicImagesDir)) {
+          const slug = normTitle.replace(/\s+/g, '-');
+          const pub = candidates.find(c => c.dir === publicImagesDir)!;
+          const pref = pub.files.find(f => f.toLowerCase().startsWith(slug));
+          if (pref) best = { file: pref, dir: publicImagesDir, score: 1 };
+        }
+
+        if (best) {
+          // if best file is in rootImagesDir (Projects Pictures) but not in public, copy it to public/project-pictures
+          if (best.dir === rootImagesDir && !fs.existsSync(publicImagesDir)) {
+            fs.mkdirSync(publicImagesDir, { recursive: true });
+          }
+
+          const sourcePath = path.join(best.dir, best.file);
+          const destPath = path.join(publicImagesDir, best.file);
+
+          if (best.dir === rootImagesDir && !fs.existsSync(destPath)) {
+            try {
+              fs.copyFileSync(sourcePath, destPath);
+            } catch {
+              // ignore copy errors and fall back to using the filename as-is
+            }
+          }
+
+          imageUrl = `/project-pictures/${encodeURIComponent(best.file)}`;
+        }
+      }
+    } catch {
+      // ignore file system errors
+    }
+
+    const sanitizeTitle = (t: string) =>
+      normalizeLatexText(t)
+        .replace(/[\/\\]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return {
+      title: sanitizeTitle(title) || 'Project',
+      description: description.replace(/\\href\{([^}]*)\}\{([^}]*)\}/g, '$2').replace(/\\&/g, '&').replace(/\\_/g, '_').replace(/\\%/g, '%').replace(/\\\\/g, ' ').replace(/\s+/g, ' ').trim(),
+      imageUrl: imageUrl ?? '',
+      tags,
+    };
+  });
+
+  return projects;
+};
+
 const buildTechnologySkillsPreview = (content: string): string[] => {
   // Technology Skills split by lines
   const lines = content
@@ -2030,9 +2189,20 @@ export default async function Home() {
         </div>
 
         <div className="portfolioProjectGrid">
-          {FEATURED_PROJECTS.map(project => (
-            <PortfolioProjectCard key={project.title} project={project} />
-          ))}
+          {
+            (() => {
+              const projectsRaw = extractRawSection(cvText, ['Recent Projects', 'Projects', 'Project Experience'])
+                ?? extractSection(cvText, ['Recent Projects', 'Projects', 'Project Experience']);
+
+              const parsed = parseProjectsFromLatex(projectsRaw ?? '');
+
+              const display = parsed.length > 0
+                ? parsed.map(p => ({ ...p, imageUrl: p.imageUrl ?? `https://source.unsplash.com/800x600/?${encodeURIComponent(p.title)}` }))
+                : FEATURED_PROJECTS;
+
+              return display.map(project => <PortfolioProjectCard key={project.title} project={project} />);
+            })()
+          }
         </div>
       </section>
 
