@@ -1377,6 +1377,23 @@ a:hover {
 	gap: 0.9rem;
 }
 
+/* Make profile highlight cards slightly smaller for quick visual scan */
+.portfolioHighlightGrid {
+    gap: 0.6rem;
+}
+
+.portfolioHighlightCard {
+    padding: 0.7rem;
+}
+
+.portfolioHighlightCard h3 {
+    font-size: 0.95rem;
+}
+
+.portfolioHighlightCard p {
+    font-size: 0.88rem;
+}
+
 .portfolioHighlightCard,
 .portfolioTraitCard,
 .portfolioProjectCard {

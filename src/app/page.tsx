@@ -2010,8 +2010,6 @@ export default async function Home() {
           </div>
       </section>
 
-      <JobCannonInsights />
-
       <section className="portfolioSection" id="portfolio-personality">
         <div className="portfolioSectionHeadingBlock">
           <p className="portfolioSectionEyebrow">Profile</p>
@@ -2021,6 +2019,19 @@ export default async function Home() {
         <div className="portfolioHighlightGrid">
           {PORTFOLIO_HIGHLIGHTS.map(highlight => (
             <PortfolioHighlightCard key={highlight.title} highlight={highlight} />
+          ))}
+        </div>
+      </section>
+
+      <section className="portfolioSection" id="portfolio-projects">
+        <div className="portfolioSectionHeadingBlock">
+          <p className="portfolioSectionEyebrow">Projects</p>
+          <h2>Featured work and visual proof</h2>
+        </div>
+
+        <div className="portfolioProjectGrid">
+          {FEATURED_PROJECTS.map(project => (
+            <PortfolioProjectCard key={project.title} project={project} />
           ))}
         </div>
       </section>
@@ -2038,18 +2049,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="portfolioSection" id="portfolio-projects">
-        <div className="portfolioSectionHeadingBlock">
-          <p className="portfolioSectionEyebrow">Projects</p>
-          <h2>Featured work and visual proof</h2>
-        </div>
-
-        <div className="portfolioProjectGrid">
-          {FEATURED_PROJECTS.map(project => (
-            <PortfolioProjectCard key={project.title} project={project} />
-          ))}
-        </div>
-      </section>
+      <JobCannonInsights />
 
       <section className="portfolioSection portfolioCvAccessSection" id="cv-preview">
         <div className="portfolioSectionHeadingBlock">

@@ -287,12 +287,26 @@ export default async function JobCannonInsights() {
 		<section className="jobCannonSection" id="jobcannon-insights">
 			<div className="portfolioSectionHeadingBlock">
 				<p className="portfolioSectionEyebrow">JobCannon intelligence</p>
-				<h2>Assessment insights</h2>
+				<h2>Personality Assessment insights</h2>
 			</div>
 
-			<p className="jobCannonSourceNote">
-				This section shows assessment summaries and interactive visual profiles for each test (personality radars, leadership styles, MBTI, DISC, multiple intelligences, and related metrics).
-			</p>
+			{
+				(() => {
+					const titles = studies.map(s => s.title).filter(Boolean);
+					const formatted = (() => {
+						if (titles.length === 0) return 'no tests available';
+						if (titles.length === 1) return titles[0];
+						if (titles.length === 2) return `${titles[0]} and ${titles[1]}`;
+						return `${titles.slice(0, -1).join(', ')} and ${titles[titles.length - 1]}`;
+					})();
+
+					return (
+						<p className="jobCannonSourceNote">
+							Personality assessment summaries and interactive profiles for {formatted}.
+						</p>
+					);
+				})()
+			}
 
 			<div className="jobCannonSummaryGrid">
 				<div className="jobCannonSummarySpacer" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -309,7 +323,7 @@ export default async function JobCannonInsights() {
 				</div>
 			</div>
 
-			<p className="jobCannonIntroSmall">Click the arrow to expand and view detailed test results and AI-generated insights.</p>
+			<p className="jobCannonIntroSmall">Expand to view personality test results and AI insights.</p>
 
 			<div id="jobcannon-insights-body" style={{ display: 'none' }}>
 				<div className="jobCannonStudyStack">
